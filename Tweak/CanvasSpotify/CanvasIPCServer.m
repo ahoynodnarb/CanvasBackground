@@ -5,7 +5,7 @@
 @implementation CanvasIPCServer
 {
     MRYIPCCenter *_center;
-    NSDictionary *_data;
+    NSArray *_data;
 }
 
 + (void)load
@@ -30,16 +30,15 @@
         _center = [MRYIPCCenter centerNamed:@"com.popsicletreehouse.CanvasIPCServer"];
         [_center addTarget:self action:@selector(getCanvas:)];
         [_center addTarget:self action:@selector(updateCanvas:)];
-        NSLog(@"[CanvasIPCServer] running server in %@", [NSProcessInfo processInfo].processName);
     }
     return self;
 }
 
-- (void)updateCanvas:(NSDictionary *)args
+- (void)updateCanvas:(NSArray *)args
 {
     _data = args;
 }
-- (NSDictionary *)getCanvas
+- (NSArray *)getCanvas
 {
     return _data;
 }

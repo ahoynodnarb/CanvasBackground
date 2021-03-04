@@ -14,7 +14,8 @@ static MRYIPCCenter *center;
 	// This next part taken from  https://github.com/schneelittchen/Violet
 	%orig;
 	NSLog(@"spotifycanvas canvasVideo before: %@", canvasVideo);
-	canvasVideo = [center callExternalMethod:@selector(getCanvas) withArguments:nil][@"canvas"];
+	NSArray *data = [center callExternalMethod:@selector(getCanvas) withArguments:nil];
+	canvasVideo = [NSKeyedUnarchiver unarchiveObjectWithData: data[0]];
 	if(!canvasVideo)
 		canvasVideo = [[UIView alloc] initWithFrame:[[self view] bounds]];
 	[canvasVideo setAutoresizingMask:UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight];
@@ -38,7 +39,8 @@ static MRYIPCCenter *center;
 		UIView *testView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 250, 250)];
 		[testView addSubview: canvasVideo];
 		[[[UIApplication sharedApplication] keyWindow] addSubview:testView];
-		[center callExternalMethod:@selector(updateCanvas)withArguments:@{@"canvas" : canvasVideo}];
+		//NSDictionary *data = @{@"canvas" : [NSKeyedArchiver archivedDataWithRootObject:canvasVideo]};
+		[center callExternalVoidMethod:@selector(updateCanvas:)withArguments:canvasVideo];
 		NSLog(@"spotifycanvas after call: %@", canvasVideo);
 	}
 	else
