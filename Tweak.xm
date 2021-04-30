@@ -55,52 +55,32 @@
 %hook CSCoverSheetViewController
 %new
 -(void)setCanvas:(NSNotification *)note {
-	NSLog(@"spotifycanvas notification selector called");
-	//[NSKeyedArchiver setClass:SPTCanvasAttributionView.self forClassName: @"SPTCanvasAttributionView"];
-	AVQueuePlayer *canvasPlayer = [NSKeyedUnarchiver unarchiveObjectWithData:[note userInfo][@"player"]];
-	AVPlayerLayer *canvasLayer = [NSKeyedUnarchiver unarchiveObjectWithData:[note userInfo][@"layer"]];
 	// AVQueuePlayer *canvasPlayer = [note userInfo][@"player"];
 	// AVPlayerLayer *canvasLayer = [note userInfo][@"layer"];
-    canvasPlayer.volume = 0.0;
-	[canvasPlayer setPreventsDisplaySleepDuringVideoPlayback:NO];
-	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+	NSLog(@"canvasbackground callback called");
+	AVPlayer *canvasPlayer = [AVPlayer playerWithURL:[[note userInfo] objectForKey:@"URL"]];
+	AVPlayerViewController *playerViewController = [[AVPlayerViewController alloc] init];
+    playerViewController.player = canvasPlayer;
+    playerViewController.player.volume = 0;
+    playerViewController.view.frame = self.view.bounds;
+    [self.view addSubview:playerViewController.view];
+    [canvasPlayer play];
+    // canvasPlayer.volume = 0.0;
+	// [canvasPlayer setPreventsDisplaySleepDuringVideoPlayback:NO];
+	// [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 
-	//AVPlayerLooper *playerLooper = [AVPlayerLooper playerLooperWithPlayer:canvasPlayer templateItem:canvasPlayer.items[0]];
-
-    [canvasLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
-    [canvasLayer setFrame:[[[self view] layer] bounds]];
-    [[[self view] layer] insertSublayer:canvasLayer atIndex:0];
-	[canvasPlayer play];
-	// [canvasVideo setAutoresizingMask:UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight];
-	// [canvasVideo setContentMode:UIViewContentModeScaleAspectFill];
-	// [canvasVideo setClipsToBounds:YES];
-	// if(![canvasVideo isDescendantOfView:[self view]])
-	// 	[[self view] insertSubview:canvasVideo atIndex:0];
-	//NSLog(@"spotifycanvas canvasVideo after: %@", canvasVideo);
+    // [canvasLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
+    // [canvasLayer setFrame:[[[self view] layer] bounds]];
+    // [[[self view] layer] insertSublayer:canvasLayer atIndex:0];
+	// [canvasPlayer play];
 }
 -(void)viewWillAppear:(BOOL)arg1 {
+// -(id)initWithNibName:(id)arg1 bundle:(id)arg2 {
 	%orig;
-	NSLog(@"spotifycanvas notification listener added");
+	NSLog(@"canvasbackground CSCoverSheetViewController");
+	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(setCanvas:) name:@"canvasUpdated" object:nil];
-	// // This next part taken from  https://github.com/schneelittchen/Violet
-	// %orig;
-	// //NSLog(@"spotifycanvas canvasVideo before: %@", canvasVideo);
-	// NSLog(@"spotifycanvas before callExternalMethod");
-	// //MRYIPCCenter *center = [MRYIPCCenter centerNamed:@"com.popsicletreehouse.CanvasIPCServer"];
-	// //NSData *data = [center callExternalMethod:@selector(getCanvas) withArguments:nil];
-	// NSLog(@"spotifycanvas after callExternalMethod");
-	// UIView *canvasVideo = [NSKeyedUnarchiver unarchiveObjectWithData: data];
-	// // if(!canvasVideo) {
-	// // 	NSLog(@"spotifycanvas null");
-	// // 	canvasVideo = [[UIView alloc] initWithFrame:[[self view] bounds]];
-	// // }
-	// [canvasVideo setAutoresizingMask:UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight];
-	// [canvasVideo setContentMode:UIViewContentModeScaleAspectFill];
-	// [canvasVideo setClipsToBounds:YES];
-	// if(![canvasVideo isDescendantOfView:[self view]])
-	// 	[[self view] insertSubview:canvasVideo atIndex:0];
-	// //NSLog(@"spotifycanvas canvasVideo after: %@", canvasVideo);
-
+	// [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"testNotification" object:nil];
 }
 %end
 
@@ -126,19 +106,28 @@
 // }
 // %end
 %hook SPTVideoDisplayView
--(void)layoutSubviews {
-	UIView *testView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 250, 250)];
-	[[[UIApplication sharedApplication] keyWindow] addSubview:testView];
-	//NSLog(@"canvas changed, %@", arg1);
-	//UIView *encoded = arg1;
-	NSLog(@"spotifycanvas blah");
-	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"canvasUpdated" object:nil userInfo:@{@"player": [NSKeyedArchiver archivedDataWithRootObject:self.player], @"layer": [NSKeyedArchiver archivedDataWithRootObject:[self playerLayer]]}];
-	//[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"canvasUpdated" object:nil userInfo:@{@"player": self.player, @"layer": [self playerLayer]}];
+%new
+-(void)test {
+	NSLog(@"canvasbackground beginning background task");
+	CFRunLoopStop(CFRunLoopGetCurrent());
+	// for(int i = 0; i < 20; i++) {
+	// 	sleep(2);
+	// 	NSLog(@"canvasbackground test called");
+	// 	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
+	// 	// [[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(test) name:@"testNotification" object:nil];
+	// 	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"canvasUpdated" object:nil userInfo:@{@"URL": canvasURL}];
+	// }
+}
+-(void)didMoveToWindow {
+	%orig;
+	NSLog(@"canvasbackground layoutSubviews called");
+	AVAsset *videoAsset = self.player.currentItem.asset;
+	NSURL *canvasURL = [(AVURLAsset *)videoAsset URL];
+	if(self.player && canvasURL) {
+		[self performSelectorInBackground:@selector(test) withObject:nil];
+		[[NSRunLoop currentRunLoop] run];
+	}
 }
 %end
 
-// %ctor {
-// 	//center = [MRYIPCCenter centerNamed:@"com.popsicletreehouse.CanvasIPCServer"];
-// 	[CanvasBackgroundServer sharedInstance];
-// }
 #pragma clang diagnostic pop
