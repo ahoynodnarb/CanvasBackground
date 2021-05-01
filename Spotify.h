@@ -14,6 +14,7 @@
 - (BOOL)isPlaying;
 @end
 @interface SPTCanvasTrackCheckerImplementation : NSObject
+@property (nonatomic, strong) NSString *currentTrackURI;
 -(void)saveCanvasWithURL:(NSURL *)canvasURL;
 @end
 @interface SPTStatefulPlayer : NSObject
@@ -21,6 +22,10 @@
 @end
 @interface SPTPlayerTrack : NSObject
 @property(copy, nonatomic) NSURL *URI;
+@end
+@interface LSApplicationProxy
++(LSApplicationProxy *)applicationProxyForIdentifier:(NSString *)bundleId;
+-(NSURL *)containerURL;
 @end
 
 SPTPlayerTrack *currentTrack;
