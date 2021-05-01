@@ -4,16 +4,23 @@
 
 @interface CSCoverSheetViewController : UIViewController
 @property(nonatomic, strong) AVQueuePlayer *canvasPlayer;
-@property(nonatomic, strong) AVPlayerLayer *playerLayer;
-@property(nonatomic, strong) AVPlayerLooper *playerLooper;
-- (void)setCanvas;
-@end
-@interface SPTVideoDisplayView : UIView
-// @property(readonly, nonatomic) AVPlayerLayer *playerLayer;
-@property(nonatomic, strong, readwrite) AVPlayer *player;
+@property(nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
+@property(nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
+- (void)recreateCanvasPlayer;
 @end
 @interface SBMediaController : NSObject
 + (id)sharedInstance;
 - (BOOL)isPaused;
 - (BOOL)isPlaying;
 @end
+@interface SPTCanvasTrackCheckerImplementation : NSObject
+-(void)saveCanvasWithURL:(NSURL *)canvasURL;
+@end
+@interface SPTStatefulPlayer : NSObject
+-(void)deleteCachedPlayer;
+@end
+@interface SPTPlayerTrack : NSObject
+@property(copy, nonatomic) NSURL *URI;
+@end
+
+SPTPlayerTrack *currentTrack;
