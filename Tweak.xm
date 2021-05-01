@@ -2,6 +2,8 @@
 // Can possibly achieve this by adding the AVPlayerLayer to our 
 // own UIView instead of directly to the ViewController's view
 
+// @TODO: Add functionality for home screen
+
 #import "Spotify.h"
 
 %hook SpringBoard
@@ -25,13 +27,10 @@
 	[self.canvasPlayer removeAllItems];
 	[self.canvasPlayer insertItem:nextItem afterItem:nil];
 	self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:self.canvasPlayer.currentItem];
-	[self.canvasPlayer play];
 }
 -(void)viewDidLoad {
 	%orig;
-	NSString *canvasVideoPath = [[[%c(LSApplicationProxy) applicationProxyForIdentifier:@"com.spotify.client"] containerURL] path];
-	canvasVideoPath = [canvasVideoPath stringByAppendingPathComponent:@"Documents/CanvasBackground.mp4"];
-	self.canvasPlayer = [AVQueuePlayer playerWithURL:[NSURL fileURLWithPath:canvasVideoPath]];
+	self.canvasPlayer = [[AVQueuePlayer alloc] init];
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
 	[self.canvasPlayer setVolume:0];
 	[self.canvasPlayer setPreventsDisplaySleepDuringVideoPlayback:NO];
@@ -67,19 +66,11 @@
 	return orig;
 }
 - (void)skipToPreviousTrackTimes:(long long)arg1 {
-	%orig; 
-	[self deleteCachedPlayer];
-}
-- (void)skipToPreviousTrack {
-	%orig; 
+	%orig;
 	[self deleteCachedPlayer];
 }
 - (void)skipToNextTrackTimes:(long long)arg1 {
-	%orig; 
-	[self deleteCachedPlayer];
-}
-- (void)skipToNextTrack {
-	%orig; 
+	%orig;
 	[self deleteCachedPlayer];
 }
 %end
@@ -97,6 +88,8 @@
 	_Bool orig = %orig;
 	NSString *trackURI = [arg1 objectForKey:@"canvas.entityUri"];
 	BOOL shouldSaveCanvas = NO;
+	// I make this check because it will sometimes update
+	// canvas even if there's no canvas for the video
 	if(![self.currentTrackURI isEqualToString:trackURI]) {
 		self.currentTrackURI = trackURI;
 		shouldSaveCanvas = YES;
