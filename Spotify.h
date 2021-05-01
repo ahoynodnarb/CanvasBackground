@@ -15,9 +15,11 @@
 @end
 @interface SPTCanvasTrackCheckerImplementation : NSObject
 @property (nonatomic, strong) NSString *currentTrackURI;
+-(_Bool)isCanvasEnabledForTrack:(id)arg1;
 -(void)saveCanvasWithURL:(NSURL *)canvasURL;
 @end
 @interface SPTStatefulPlayer : NSObject
+-(id)currentTrack;
 -(void)deleteCachedPlayer;
 @end
 @interface SPTPlayerTrack : NSObject
