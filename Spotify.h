@@ -20,18 +20,24 @@
 -(_Bool)isCanvasEnabledForTrack:(id)arg1;
 -(void)saveCanvasWithURL:(NSURL *)canvasURL;
 @end
-@interface SPTStatefulPlayer : NSObject
--(id)currentTrack;
--(void)sendNotification;
-@end
 @interface SPTPlayerTrack : NSObject
 @property(copy, nonatomic) NSURL *URI;
+@end
+@interface SPTStatefulPlayer : NSObject
+-(SPTPlayerTrack *)currentTrack;
+-(SPTPlayerTrack *)playingTrack;
+-(SPTPlayerTrack *)nextTrack;
+-(void)sendNotification;
 @end
 @interface LSApplicationProxy
 +(LSApplicationProxy *)applicationProxyForIdentifier:(NSString *)bundleId;
 -(NSURL *)containerURL;
 @end
+@interface SPTCanvasModelImplementation : NSObject
+@end
 
-SPTPlayerTrack *currentTrack;
+SPTStatefulPlayer *player;
+// SPTPlayerTrack *currentTrack;
+SPTPlayerTrack *track;
 SPTCanvasTrackCheckerImplementation *impl;
 NSString *downloadedItem = @"remove";
