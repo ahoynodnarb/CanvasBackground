@@ -41,6 +41,7 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 }
 -(void)viewDidLoad {
 	%orig;
+	NSLog(@"canvasBackground viewDidLoad called");
 	[[NSFileManager defaultManager] removeItemAtPath:canvasVideoPath error:nil];
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
@@ -68,7 +69,7 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 %new
 -(void)deleteCachedPlayer {
 	[[NSFileManager defaultManager] removeItemAtPath:canvasVideoPath error:nil];
-	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"clearCanvas" object:nil];
+	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:nil];
 	NSLog(@"canvasBackground deleting cache");
 }
 // - (id)nextTrack {
@@ -94,19 +95,22 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 %end
 %hook SPTCanvasTrackCheckerImplementation
 %new
--(void)saveCanvasWithURL:(NSURL *)canvasURL {
+-(void)downloadCanvas:(NSURL *)canvasURL {
 	NSLog(@"canvasBackground saving canvas");
 	NSData *canvasData = [NSData dataWithContentsOfURL:canvasURL];
 	[canvasData writeToFile:canvasVideoPath atomically:YES];
 	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:nil];
 }
 - (_Bool)isCanvasEnabledForTrackMetadata:(id)arg1 {
-	NSLog(@"canvasBackground %@", NSStringFromSelector(_cmd));
 	BOOL shouldSaveCanvas = [self isCanvasEnabledForTrack:currentTrack];
 	NSString *trackURI = [arg1 objectForKey:@"canvas.entityUri"];
+	// NSArray *arr = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[canvasVideoPath stringByReplacingOccurrencesOfString:@"CanvasBackground.mp4" withString:@""] error:nil];
+	// for(NSString *file in arr) {
+	// 	NSLog(@"canvasBackground %@", file);
+	// }
 	if(shouldSaveCanvas && [trackURI isEqualToString:currentTrack.URI.absoluteString] && ![[NSFileManager defaultManager] fileExistsAtPath:canvasVideoPath]) {
 		NSURL *downloadedItem = [NSURL URLWithString:[arg1 objectForKey:@"canvas.url"]];
-		[self performSelectorInBackground:@selector(saveCanvasWithURL:) withObject:downloadedItem];
+		[self performSelectorInBackground:@selector(downloadCanvas:) withObject:downloadedItem];
 	}
 	return %orig;
 }

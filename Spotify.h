@@ -16,7 +16,7 @@
 @end
 @interface SPTCanvasTrackCheckerImplementation : NSObject
 -(_Bool)isCanvasEnabledForTrack:(id)arg1;
--(void)saveCanvasWithURL:(NSURL *)canvasURL;
+-(void)downloadCanvas:(NSURL *)canvasURL;
 @end
 @interface SPTStatefulPlayer : NSObject
 @property (nonatomic, assign) BOOL previouslyPaused;
@@ -36,3 +36,4 @@
 @end
 
 SPTPlayerTrack *currentTrack;
+NSString *downloadedItem;
