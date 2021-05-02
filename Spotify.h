@@ -6,19 +6,21 @@
 @property(nonatomic, strong) AVQueuePlayer *canvasPlayer;
 @property(nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
 @property(nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
-- (void)recreateCanvasPlayer;
+-(void)recreateCanvasPlayer;
+-(void)clearCanvas;
 @end
 @interface SBMediaController : NSObject
 + (id)sharedInstance;
-- (BOOL)isPaused;
-- (BOOL)isPlaying;
+-(BOOL)isPaused;
+-(BOOL)isPlaying;
 @end
 @interface SPTCanvasTrackCheckerImplementation : NSObject
-@property (nonatomic, strong) NSString *currentTrackURI;
 -(_Bool)isCanvasEnabledForTrack:(id)arg1;
 -(void)saveCanvasWithURL:(NSURL *)canvasURL;
 @end
 @interface SPTStatefulPlayer : NSObject
+@property (nonatomic, assign) BOOL previouslyPaused;
+- (_Bool)isPaused;
 -(id)currentTrack;
 -(void)deleteCachedPlayer;
 @end
@@ -28,6 +30,9 @@
 @interface LSApplicationProxy
 +(LSApplicationProxy *)applicationProxyForIdentifier:(NSString *)bundleId;
 -(NSURL *)containerURL;
+@end
+@interface SPTCanvasMetadataResolverImplementation : NSObject
+-(id)createCanvasRequest;
 @end
 
 SPTPlayerTrack *currentTrack;
