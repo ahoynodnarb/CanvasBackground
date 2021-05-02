@@ -15,7 +15,7 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 %hook SpringBoard
 -(void)noteInterfaceOrientationChanged:(long long)arg1 duration:(double)arg2 logMessage:(id)arg3 {
 	%orig;
-	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:nil];
+	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"resizeCanvas" object:nil];
 }
 %end
 
@@ -24,8 +24,8 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 %property(nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
 %property(nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
 %new
--(void)clearCanvas {
-	[self.canvasPlayer removeAllItems];
+-(void)resizeCanvas {
+	[self.canvasPlayerLayer setFrame:[[[self view] layer] bounds]];
 }
 %new
 -(void)recreateCanvasPlayer {
@@ -33,9 +33,7 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 	SBMediaController *mediaController = [%c(SBMediaController) sharedInstance];
 	if([mediaController isPlaying] || [mediaController isPaused]) {
 		AVPlayerItem *nextItem = [AVPlayerItem playerItemWithURL:[NSURL fileURLWithPath:canvasVideoPath]];
-		[self.canvasPlayerLayer setFrame:[[[self view] layer] bounds]];
 		[self.canvasPlayer removeAllItems];
-		// [self.canvasPlayer insertItem:nextItem afterItem:nil];
 		self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:nextItem];
 	}
 }
@@ -53,7 +51,7 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(recreateCanvasPlayer) name:@"recreateCanvas" object:nil];
-	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(clearCanvas) name:@"clearCanvas" object:nil];
+	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(resizeCanvas) name:@"resizeCanvas" object:nil];
 }
 -(void)viewWillAppear:(BOOL)animated {
 	%orig;
@@ -69,8 +67,8 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 %new
 -(void)deleteCachedPlayer {
 	[[NSFileManager defaultManager] removeItemAtPath:canvasVideoPath error:nil];
-	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:nil];
 	NSLog(@"canvasBackground deleting cache");
+	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:nil];
 }
 // - (id)nextTrack {
 // 	id orig = %orig;
@@ -85,32 +83,38 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 // }
 - (SPTPlayerTrack *)playingTrack {
 	SPTPlayerTrack *orig = %orig;
-	// NSLog(@"canvasBackground currentTrack: %@ orig: %@ equal: %d", currentTrack.URI, orig.URI, [currentTrack.URI isEqual:orig.URI]);
+	NSLog(@"canvasBackground fileExistsAtPath: %d currentTrack: %@ orig: %@ equal: %d", [[NSFileManager defaultManager] fileExistsAtPath:canvasVideoPath], currentTrack.URI, orig.URI, [currentTrack.URI isEqual:orig.URI]);
+	// NSLog(@"canvasBackground fileExistsAtPath: %d", [[NSFileManager defaultManager] fileExistsAtPath:canvasVideoPath]);
 	if([[NSFileManager defaultManager] fileExistsAtPath:canvasVideoPath] && ![currentTrack.URI isEqual:orig.URI]) {
 		[self deleteCachedPlayer];
 	}
 	currentTrack = orig;
+	// [[NSNotificationCenter defaultCenter] postNotificationName:@"finishedChangingTracks" object:nil];
 	return orig;
 }
 %end
 %hook SPTCanvasTrackCheckerImplementation
+%property (nonatomic, strong) NSURL *canvasURL;
 %new
--(void)downloadCanvas:(NSURL *)canvasURL {
+-(void)saveCanvasWithURL:(NSURL *)canvasURL {
 	NSLog(@"canvasBackground saving canvas");
 	NSData *canvasData = [NSData dataWithContentsOfURL:canvasURL];
 	[canvasData writeToFile:canvasVideoPath atomically:YES];
 	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:nil];
 }
 - (_Bool)isCanvasEnabledForTrackMetadata:(id)arg1 {
+	NSLog(@"canvasBackground trackMetadata");
 	BOOL shouldSaveCanvas = [self isCanvasEnabledForTrack:currentTrack];
 	NSString *trackURI = [arg1 objectForKey:@"canvas.entityUri"];
-	// NSArray *arr = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[canvasVideoPath stringByReplacingOccurrencesOfString:@"CanvasBackground.mp4" withString:@""] error:nil];
-	// for(NSString *file in arr) {
-	// 	NSLog(@"canvasBackground %@", file);
-	// }
-	if(shouldSaveCanvas && [trackURI isEqualToString:currentTrack.URI.absoluteString] && ![[NSFileManager defaultManager] fileExistsAtPath:canvasVideoPath]) {
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	if(shouldSaveCanvas && [trackURI isEqualToString:currentTrack.URI.absoluteString]) {
+		// [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(downloadCanvas) name:@"finishedChangingTracks" object:nil];
 		NSURL *downloadedItem = [NSURL URLWithString:[arg1 objectForKey:@"canvas.url"]];
-		[self performSelectorInBackground:@selector(downloadCanvas:) withObject:downloadedItem];
+		if(![downloadedItem isEqual: self.canvasURL]) 
+			[self saveCanvasWithURL:downloadedItem];
+		self.canvasURL = downloadedItem;
+		// [self performSelectorInBackground:@selector(downloadCanvas:) withObject:downloadedItem];
+		// [self downloadCanvas:downloadedItem];
 	}
 	return %orig;
 }
