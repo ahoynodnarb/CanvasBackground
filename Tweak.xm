@@ -9,7 +9,7 @@ TODO: Fix bug where it doesn't refresh canvas when new song plays
 */
 
 #import "Spotify.h"
-//gets the path of the spotify mp4
+
 NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyForIdentifier:@"com.spotify.client"] containerURL] path] stringByAppendingPathComponent:@"Documents/CanvasBackground.mp4"];
 
 %hook SpringBoard
@@ -30,20 +30,18 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 %new
 -(void)recreateCanvasPlayer:(NSNotification *)note {
 	NSString *canvasVideoURL = [[note userInfo] objectForKey:@"url"];
-	if(![canvasVideoURL isEqualToString:@""]) {
-		NSLog(@"canvasBackground recreating player");
+	if(![canvasVideoURL isEqualToString:@"remove"]) {
+		[self.canvasPlayerLayer setFrame:[[[self view] layer] bounds]];
 		AVPlayerItem *nextItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:canvasVideoURL]];
 		[self.canvasPlayer removeAllItems];
 		self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:nextItem];
 	}
 	else {
-		NSLog(@"canvasBackground removing player");
 		[self.canvasPlayer removeAllItems];
 	}
 }
 -(void)viewDidLoad {
 	%orig;
-	NSLog(@"canvasBackground viewDidLoad called");
 	[[NSFileManager defaultManager] removeItemAtPath:canvasVideoPath error:nil];
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
@@ -59,7 +57,7 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 }
 -(void)viewWillAppear:(BOOL)animated {
 	%orig;
-	[self clearCanvasIfNeeded];
+	[self.canvasPlayer play];
 	SBMediaController *controller = [%c(SBMediaController) sharedInstance];
 	if(![controller isPaused] && ![controller isPlaying]) {
 		[self.canvasPlayer removeAllItems];
@@ -73,37 +71,68 @@ NSString *const canvasVideoPath = [[[[%c(LSApplicationProxy) applicationProxyFor
 %hook SPTStatefulPlayer
 %new
 -(void)sendNotification {
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:@{@"url": downloadedItem}];
-	NSLog(@"canvasBackground nextTrack sending notification... %@", downloadedItem);
-	downloadedItem = @"";
+	downloadedItem = @"remove";
 }
 - (id)nextTrack {
 	NSLog(@"canvasBackground nextTrack");
-	[self performSelector:@selector(sendNotification) withObject:nil afterDelay:0.5];
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sendNotification) name:@"canvasAssigned" object:nil];
 	return %orig;
 }
 - (SPTPlayerTrack *)playingTrack {
+	// currentTrack = %orig;
+	return %orig;
+}
+- (id)currentTrack {
 	currentTrack = %orig;
 	return %orig;
 }
 %end
-%hook SPTCanvasTrackCheckerImplementation
-%property (nonatomic, strong) NSURL *canvasURL;
-- (_Bool)isCanvasEnabledForTrackMetadata:(id)arg1 {
-	NSString *trackURI = [arg1 objectForKey:@"canvas.entityUri"];
-	NSLog(@"canvasBackground trackURI: %@ currentTrack: %@", trackURI, currentTrack.URI.absoluteString);
-	if(%orig && ([trackURI isEqualToString:currentTrack.URI.absoluteString] ^ !currentTrack)) {
-		downloadedItem = [arg1 objectForKey:@"canvas.url"];
-		NSLog(@"canvasBackground downloadedItem: %@", downloadedItem);
-		if(![downloadedItem isEqualToString:@""]) {
+%hook SPTCanvasModelImplementation
+- (id)initWithCanvasId:(id)arg1 canvasURI:(id)arg2 contentURL:(NSURL *)arg3 contentId:(id)arg4 type:(unsigned long long)arg5 artistURI:(id)arg6 artistName:(id)arg7 entityURI:(id)arg8 albumCoverURL:(id)arg9 {
+	if([impl isCanvasEnabledForTrack:currentTrack]) {
+		downloadedItem = arg3.absoluteString ? arg3.absoluteString : @"remove";
+		if(![downloadedItem isEqualToString:@"remove"]) {
 			static dispatch_once_t onceToken;
 			dispatch_once(&onceToken, ^{
 				[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:@{@"url": downloadedItem}];
-				downloadedItem = @"";
-				NSLog(@"canvasBackground sending notification... %@", downloadedItem);
+				downloadedItem = @"remove";
 			});
 		}
 	}
+	else {
+		downloadedItem = @"remove";
+	}
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"canvasAssigned" object:nil];
+	return %orig;
+}
+%end
+%hook SPTCanvasTrackCheckerImplementation
+// %property (nonatomic, strong) NSURL *previousURI;
+// - (_Bool)isCanvasEnabledForTrackMetadata:(id)arg1 {
+// 	// NSString *trackURI = [arg1 objectForKey:@"canvas.entityUri"];
+// 	BOOL shouldSaveCanvas = [self isCanvasEnabledForTrack:currentTrack];
+// 	if(shouldSaveCanvas) {
+// 		downloadedItem = [arg1 objectForKey:@"canvas.url"];
+// 		if(![downloadedItem isEqualToString:@"remove"]) {
+// 			static dispatch_once_t onceToken;
+// 			dispatch_once(&onceToken, ^{
+// 				[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:@{@"url": downloadedItem}];
+// 				downloadedItem = @"remove";
+// 			});
+// 		}
+// 	}
+// 	else {
+// 		downloadedItem = @"remove";
+// 	}
+// 	[[NSNotificationCenter defaultCenter] postNotificationName:@"canvasAssigned" object:nil];
+// 	return %orig;
+// }
+- (id)initWithTestManager:(id)arg1 {
+	NSLog(@"canvasBackground checker init");
+	impl = self;
 	return %orig;
 }
 %end

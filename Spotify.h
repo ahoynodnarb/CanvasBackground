@@ -6,7 +6,6 @@
 @property(nonatomic, strong) AVQueuePlayer *canvasPlayer;
 @property(nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
 @property(nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
--(void)clearCanvasIfNeeded;
 -(void)recreateCanvasPlayer:(NSNotification *)note;
 -(void)resizeCanvas;
 @end
@@ -16,7 +15,9 @@
 -(BOOL)isPlaying;
 @end
 @interface SPTCanvasTrackCheckerImplementation : NSObject
-@property (nonatomic, strong) NSURL *canvasURL;
+@property (nonatomic, strong) NSString *previousURI;
+- (id)initWithTestManager:(id)arg1;
+-(_Bool)isCanvasEnabledForTrack:(id)arg1;
 -(void)saveCanvasWithURL:(NSURL *)canvasURL;
 @end
 @interface SPTStatefulPlayer : NSObject
@@ -30,9 +31,7 @@
 +(LSApplicationProxy *)applicationProxyForIdentifier:(NSString *)bundleId;
 -(NSURL *)containerURL;
 @end
-@interface SPTCanvasMetadataResolverImplementation : NSObject
-+(id)bodyDataForTracks:(id)arg1;
-@end
 
 SPTPlayerTrack *currentTrack;
-NSString *downloadedItem = @"";
+SPTCanvasTrackCheckerImplementation *impl;
+NSString *downloadedItem = @"remove";
