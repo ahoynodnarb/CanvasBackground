@@ -14,12 +14,6 @@
 -(BOOL)isPaused;
 -(BOOL)isPlaying;
 @end
-@interface SPTCanvasTrackCheckerImplementation : NSObject
-@property (nonatomic, strong) NSString *previousURI;
-- (id)initWithTestManager:(id)arg1;
--(_Bool)isCanvasEnabledForTrack:(id)arg1;
--(void)saveCanvasWithURL:(NSURL *)canvasURL;
-@end
 @interface SPTPlayerTrack : NSObject
 @end
 @interface SPTStatefulPlayer : NSObject
@@ -34,6 +28,13 @@
 @end
 @interface SPTCanvasNowPlayingContentLoader : NSObject
 - (SPTCanvasContentLayerViewControllerViewModel *)canvasViewControllerViewModelForTrack:(id)arg1;
+@end
+@interface SBHomeScreenViewController : UIViewController
+@property (nonatomic, strong) AVQueuePlayer *canvasPlayer;
+@property (nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
+@property (nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
+-(void)recreateCanvasPlayer:(NSNotification *)note;
+-(void)resizeCanvas;
 @end
 
 SPTCanvasNowPlayingContentLoader *loader;
