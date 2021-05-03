@@ -23,6 +23,8 @@
 		[self sendNotification];
 		sentNotificationOnce = YES;
 	}
+	NSLog(@"canvasBackground setPaused arg1: %d numberValue: %@", arg1, [NSNumber numberWithBool:arg1]);
+	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"togglePlayer" object:nil userInfo:@{@"isPlaying": [NSNumber numberWithBool:!arg1]}];
 	return %orig;
 }
 %end
