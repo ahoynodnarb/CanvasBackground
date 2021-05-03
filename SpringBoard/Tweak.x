@@ -1,8 +1,3 @@
-// Should probably make my own UIViewController 
-// for adding my own views but eh
-// TODO: Make the firstFrameView remove itself
-// from superview to avoid a memory leak
-
 #import "../Shared.h"
 
 %hook SpringBoard
@@ -76,7 +71,6 @@
 	[self.firstFrameView setContentMode:UIViewContentModeScaleAspectFill];
 	[self.firstFrameView setClipsToBounds:YES];
 	[self.firstFrameView setHidden:YES];
-	[[self view] insertSubview:self.firstFrameView atIndex:0];
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
 	[self.canvasPlayer setVolume:0];
@@ -84,6 +78,7 @@
 	[self.canvasPlayerLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
 	[self.canvasPlayerLayer setFrame:[[[self view] layer] bounds]];
 	[[[self view] layer] insertSublayer:self.canvasPlayerLayer atIndex:0];
+	[[self view] insertSubview:self.firstFrameView atIndex:0];
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(recreateCanvasPlayer:) name:@"recreateCanvas" object:@"com.spotify.client"];
@@ -157,7 +152,6 @@
 	[self.firstFrameView setContentMode:UIViewContentModeScaleAspectFill];
 	[self.firstFrameView setClipsToBounds:YES];
 	[self.firstFrameView setHidden:YES];
-	[[self view] insertSubview:self.firstFrameView atIndex:0];
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
 	[self.canvasPlayer setVolume:0];
@@ -165,6 +159,7 @@
 	[self.canvasPlayerLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
 	[self.canvasPlayerLayer setFrame:[[[self view] layer] bounds]];
 	[[[self view] layer] insertSublayer:self.canvasPlayerLayer atIndex:0];
+	[[self view] insertSubview:self.firstFrameView atIndex:0];
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(recreateCanvasPlayer:) name:@"recreateCanvas" object:@"com.spotify.client"];
