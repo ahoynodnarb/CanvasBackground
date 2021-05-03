@@ -3,6 +3,7 @@
 #import <UIKit/UIKit.h>
 
 @interface CSCoverSheetViewController : UIViewController
+@property (nonatomic, strong) AVMutableComposition *canvasComposition;
 @property(nonatomic, strong) AVQueuePlayer *canvasPlayer;
 @property(nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
 @property(nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
