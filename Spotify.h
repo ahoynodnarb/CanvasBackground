@@ -3,7 +3,6 @@
 #import <UIKit/UIKit.h>
 
 @interface CSCoverSheetViewController : UIViewController
-@property (nonatomic, strong) AVMutableComposition *canvasComposition;
 @property(nonatomic, strong) AVQueuePlayer *canvasPlayer;
 @property(nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
 @property(nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
@@ -22,23 +21,20 @@
 -(void)saveCanvasWithURL:(NSURL *)canvasURL;
 @end
 @interface SPTPlayerTrack : NSObject
-@property(copy, nonatomic) NSURL *URI;
 @end
 @interface SPTStatefulPlayer : NSObject
 -(SPTPlayerTrack *)currentTrack;
--(SPTPlayerTrack *)playingTrack;
--(SPTPlayerTrack *)nextTrack;
 -(void)sendNotification;
 @end
-@interface LSApplicationProxy
-+(LSApplicationProxy *)applicationProxyForIdentifier:(NSString *)bundleId;
--(NSURL *)containerURL;
-@end
 @interface SPTCanvasModelImplementation : NSObject
+@property(readonly, copy, nonatomic) NSURL *contentURL;
+@end
+@interface SPTCanvasContentLayerViewControllerViewModel : NSObject
+@property(readonly, nonatomic) SPTCanvasModelImplementation *canvasModel;
+@end
+@interface SPTCanvasNowPlayingContentLoader : NSObject
+- (SPTCanvasContentLayerViewControllerViewModel *)canvasViewControllerViewModelForTrack:(id)arg1;
 @end
 
-SPTStatefulPlayer *player;
-// SPTPlayerTrack *currentTrack;
-SPTPlayerTrack *track;
-SPTCanvasTrackCheckerImplementation *impl;
-NSString *downloadedItem = @"remove";
+SPTCanvasNowPlayingContentLoader *loader;
+BOOL sentNotificationOnce;
