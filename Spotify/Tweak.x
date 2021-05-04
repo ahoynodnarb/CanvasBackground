@@ -1,4 +1,6 @@
-#import "../Shared.h"
+#import "Spotify.h"
+
+SPTPlayerTrack *nextTrack;
 %hook SPTCanvasNowPlayingContentLoader
 -(id)initWithCanvasTrackChecker:(id)arg1 viewModelFactory:(id)arg2 contentReloader:(id)arg3 contentLoaderTracker:(id)arg4 nowPlayingState:(id)arg5 {
 	loader = self;
@@ -7,15 +9,32 @@
 %end
 %hook SPTStatefulPlayer
 %new
--(void)sendNotification {
-	SPTCanvasContentLayerViewControllerViewModel *viewModel = [loader canvasViewControllerViewModelForTrack:[self currentTrack]];
+-(NSString *)getCanvasURLForTrack:(SPTPlayerTrack *)track {
+	// NSLog(@"canvasBackground track: %@", track);
+	SPTCanvasContentLayerViewControllerViewModel *viewModel = [loader canvasViewControllerViewModelForTrack:track];
 	SPTCanvasModelImplementation *canvasModel = viewModel.canvasModel;
-	NSString *downloadedItem = canvasModel.contentURL.absoluteString ? canvasModel.contentURL.absoluteString : @"remove";
-	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:@{@"url": downloadedItem}];
-	NSLog(@"canvasBackground posted notification downloadedItem: %@", downloadedItem);
+	NSString *returnedURL = canvasModel.contentURL.absoluteString;
+	// NSLog(@"canvasBackground returnedURL: %@", returnedURL);
+	return returnedURL ? returnedURL : @"remove";
 }
--(id)nextTrack {
-	[self sendNotification];
+%new
+-(void)sendNotification {
+	// NSLog(@"canvasBackground nextTrack: %@", nextTrack);
+	NSString *currentTrackURL = [self getCanvasURLForTrack:[self currentTrack]];
+	shouldSend = YES;
+	NSString *nextTrackURL = [self getCanvasURLForTrack:[self nextTrack]];
+	NSLog(@"canvasBackground currentTrackURL: %@ nextTrackURL: %@", currentTrackURL, nextTrackURL);
+	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:@{@"currentURL": currentTrackURL, @"nextURL": nextTrackURL}];
+}
+- (void)skipToPreviousTrack {
+	%orig;
+	// NSLog(@"canvasBackground previousTrack");
+}
+-(SPTPlayerTrack *)nextTrack {
+	if(!shouldSend) {
+		[self sendNotification];
+	}
+	shouldSend = NO;
 	return %orig;
 }
 -(void)setPaused:(_Bool)arg1 {
@@ -23,7 +42,7 @@
 		[self sendNotification];
 		sentNotificationOnce = YES;
 	}
-	NSLog(@"canvasBackground setPaused arg1: %d numberValue: %@", arg1, [NSNumber numberWithBool:arg1]);
+	// NSLog(@"canvasBackground setPaused arg1: %d numberValue: %@", arg1, [NSNumber numberWithBool:arg1]);
 	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"togglePlayer" object:nil userInfo:@{@"isPlaying": [NSNumber numberWithBool:!arg1]}];
 	return %orig;
 }
