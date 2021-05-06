@@ -8,40 +8,47 @@ SPTPlayerTrack *nextTrack;
 }
 %end
 %hook SPTStatefulPlayer
+%property (nonatomic, strong) NSMutableDictionary *userInfo;
 %new
--(NSString *)getCanvasURLForTrack:(SPTPlayerTrack *)track {
+-(void)addCanvasToUserInfo:(SPTPlayerTrack *)track key:(NSString *)key {
 	// NSLog(@"canvasBackground test track: %@", track);
 	SPTCanvasContentLayerViewControllerViewModel *viewModel = [loader canvasViewControllerViewModelForTrack:track];
 	SPTCanvasModelImplementation *canvasModel = viewModel.canvasModel;
 	NSURL *canvasModelURL = canvasModel.contentURL;
-	NSURL *returnedURL = [assetLoader localURLForAssetURL:canvasModelURL];
-	NSString *fallbackURL = (canvasModelURL.absoluteString) ? canvasModelURL.absoluteString : @"remove";
-	if(![[NSFileManager defaultManager] fileExistsAtPath:returnedURL.path]) {
-		NSLog(@"canvasBackground using fallback: %@", fallbackURL);
-		return fallbackURL;
+	NSURL *localURL = [assetLoader localURLForAssetURL:canvasModelURL];
+	NSString *fallbackURLString = canvasModelURL.absoluteString;
+	NSString *localURLString = localURL.absoluteString;
+	if(![[NSFileManager defaultManager] fileExistsAtPath:localURL.path] && fallbackURLString) {
+		NSLog(@"canvasBackground using fallback: %@", fallbackURLString);
+		// return fallbackURL;
+		[self.userInfo setObject:fallbackURLString forKey:key];
 	}
-	NSString *returnedString = (returnedURL) ? returnedURL.absoluteString : @"remove";
-	NSLog(@"canvasBackground using returnedString: %@", returnedString);
-	return returnedString;
+	else if(localURLString) {
+		NSLog(@"canvasBackground using localURLString: %@", localURLString);
+		[self.userInfo setObject:localURLString forKey:key];
+	}
+	// return returnedString;
 }
 %new
 -(void)sendNotification {
-	// NSLog(@"canvasBackground nextTrack: %@", nextTrack);
+	self.userInfo = [[NSMutableDictionary alloc] init];
 	SPTPlayerTrack *previousTrack = [self.queue trackAtRelativePosition:-1 forState:self.playerState];
-	// SPTPlayerTrack *currentTrack = [self.queue trackAtRelativePosition:0 forState:self.playerState];
-	// SPTPlayerTrack *nextTrack = [self.queue trackAtRelativePosition:1 forState:self.playerState];
 	BOOL isPrevious = [previousTrack isEqual:[self currentTrack]];
 	previousTrack = (isPrevious) ? [self.queue trackAtRelativePosition:-2 forState:self.playerState] : previousTrack;
-	// NSLog(@"canvasBackground previousTrack: %@", previousTrack);
-	// NSLog(@"canvasBackground currentTrack: %@", [self currentTrack]);
-	// NSString *previousTrackURL = [self getCanvasURLForTrack:previousTrack];
-	NSString *previousTrackURL = [self getCanvasURLForTrack:previousTrack];
-	NSString *currentTrackURL = [self getCanvasURLForTrack:[self currentTrack]];
+	[self addCanvasToUserInfo:previousTrack key:@"previousURL"];
+	[self addCanvasToUserInfo:[self currentTrack] key:@"currentURL"];
 	shouldSend = NO;
-	NSString *nextTrackURL = [self getCanvasURLForTrack:[self nextTrack]];
-	NSLog(@"canvasBackground currentTrackURL: %@ nextTrackURL: %@ previousTrackURL: %@", currentTrackURL, nextTrackURL, previousTrackURL);
-	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" 
-	userInfo:@{@"isPrevious": @(isPrevious), @"previousURL": previousTrackURL, @"currentURL": currentTrackURL, @"nextURL": nextTrackURL}];
+	[self addCanvasToUserInfo:[self nextTrack] key:@"nextURL"];
+	[self.userInfo setObject:@(isPrevious) forKey:@"isPrevious"];
+	// NSString *previousTrackURL = [self getCanvasURLForTrack:previousTrack];
+	// NSString *currentTrackURL = [self getCanvasURLForTrack:[self currentTrack]];
+	// NSString *nextTrackURL = [self getCanvasURLForTrack:[self nextTrack]];
+	// NSLog(@"canvasBackground currentTrackURL: %@ nextTrackURL: %@ previousTrackURL: %@", currentTrackURL, nextTrackURL, previousTrackURL);
+	for(id key in self.userInfo) {
+		NSLog(@"canvasBackground key: %@ value: %@", key, [self.userInfo objectForKey:key]);
+	}
+	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:self.userInfo];
+	[self.userInfo removeAllObjects];
 }
 -(SPTPlayerTrack *)nextTrack {
 	if(shouldSend) {

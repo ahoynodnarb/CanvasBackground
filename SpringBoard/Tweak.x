@@ -47,25 +47,11 @@
 	NSString *currentVideoURL = [[note userInfo] objectForKey:@"currentURL"];
 	NSString *nextVideoURL = [[note userInfo] objectForKey:@"nextURL"];
 	BOOL isPrevious = [[[note userInfo] objectForKey:@"isPrevious"] boolValue];
-	if(![currentVideoURL isEqualToString:@"remove"]) {
+	NSLog(@"canvasBackground currentVideoURL: %@ nextVideoURL: %@ isPrevious: %d", currentVideoURL, nextVideoURL, isPrevious);
+	if(currentVideoURL) {
 		[self.canvasPlayerLayer setHidden:NO];
 		AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
-		if(isPrevious) {
-			NSLog(@"canvasBackground previous");
-			[self.canvasPlayer removeAllItems];
-			[self.canvasPlayer insertItem:currentItem afterItem:nil];
-		}
-		else {
-			if([self.canvasPlayer.items count] > 1) {
-				NSLog(@"canvasBackground advanced");
-				[self.canvasPlayer advanceToNextItem];
-			}
-			else {
-				NSLog(@"canvasBackground inserting after nil");
-				currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
-				[self.canvasPlayer insertItem:currentItem afterItem:nil];
-			}
-		}
+		[self.canvasPlayer replaceCurrentItemWithPlayerItem:currentItem];
 		[[NSNotificationCenter defaultCenter] addObserverForName:AVPlayerItemDidPlayToEndTimeNotification object:self.canvasPlayer.currentItem queue:nil usingBlock:^(NSNotification *note) {
 			[self.canvasPlayer.currentItem seekToTime:kCMTimeZero completionHandler:nil];
 			[self.canvasPlayer play];
@@ -75,18 +61,9 @@
 		}
 	}
 	else {
+		NSLog(@"canvasBackground removing items");
 		[self.firstFrameView setHidden:YES];
-		// [self.canvasPlayer removeAllItems];
-		[self.canvasPlayerLayer setHidden:YES];
-		[self.canvasPlayer pause];
-	}
-	if(![nextVideoURL isEqualToString:@"remove"]) {
-		AVPlayerItem *nextItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:nextVideoURL]];
-		NSLog(@"canvasBackground nextItem: %@", nextItem);
-		[self.canvasPlayer insertItem:nextItem afterItem:nil];
-	}
-	for(AVPlayerItem *item in self.canvasPlayer.items) {
-		NSLog(@"canvasBackground item: %@", item);
+		[self.canvasPlayer removeAllItems];
 	}
 }
 -(void)viewDidLoad {
@@ -100,7 +77,7 @@
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
 	[self.canvasPlayer setVolume:0];
 	[self.canvasPlayer setPreventsDisplaySleepDuringVideoPlayback:NO];
-	[self.canvasPlayer setActionAtItemEnd:AVPlayerActionAtItemEndPause];
+	[self.canvasPlayer setActionAtItemEnd:AVPlayerActionAtItemEndNone];
 	[self.canvasPlayerLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
 	[self.canvasPlayerLayer setFrame:[[[self view] layer] bounds]];
 	[[[self view] layer] insertSublayer:self.canvasPlayerLayer atIndex:0];

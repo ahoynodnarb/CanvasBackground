@@ -9,11 +9,12 @@
 - (SPTPlayerTrack *)trackAtRelativePosition:(long long)arg1 forState:(id)arg2;
 @end
 @interface SPTStatefulPlayer : NSObject
+@property (nonatomic, strong) NSMutableDictionary *userInfo;
 @property(readonly, nonatomic) SPTStatefulPlayerQueue *queue;
 @property(retain, nonatomic) SPTPlayerState *playerState;
 -(SPTPlayerTrack *)currentTrack;
 -(SPTPlayerTrack *)nextTrack;
--(NSString *)getCanvasURLForTrack:(SPTPlayerTrack *)track;
+-(void)addCanvasToUserInfo:(SPTPlayerTrack *)track key:(NSString *)key;
 -(void)sendNotification;
 @end
 @interface SPTCanvasModelImplementation : NSObject
