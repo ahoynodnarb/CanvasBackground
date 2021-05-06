@@ -48,8 +48,10 @@
 	NSString *nextVideoURL = [[note userInfo] objectForKey:@"nextURL"];
 	BOOL isPrevious = [[[note userInfo] objectForKey:@"isPrevious"] boolValue];
 	if(![currentVideoURL isEqualToString:@"remove"]) {
+		[self.canvasPlayerLayer setHidden:NO];
 		AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
 		if(isPrevious) {
+			NSLog(@"canvasBackground previous");
 			[self.canvasPlayer removeAllItems];
 			[self.canvasPlayer insertItem:currentItem afterItem:nil];
 		}
@@ -59,8 +61,9 @@
 				[self.canvasPlayer advanceToNextItem];
 			}
 			else {
+				NSLog(@"canvasBackground inserting after nil");
 				currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
-				[self.canvasPlayer insertItem:currentItem afterItem:self.canvasPlayer.currentItem];
+				[self.canvasPlayer insertItem:currentItem afterItem:nil];
 			}
 		}
 		[[NSNotificationCenter defaultCenter] addObserverForName:AVPlayerItemDidPlayToEndTimeNotification object:self.canvasPlayer.currentItem queue:nil usingBlock:^(NSNotification *note) {
@@ -70,16 +73,17 @@
 		if(self.isVisible) {
 			[self.canvasPlayer play];
 		}
-		if(![nextVideoURL isEqualToString:@"remove"]) {
-			AVPlayerItem *nextItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:nextVideoURL]];
-			NSLog(@"canvasBackground nextItem: %@", nextItem);
-			[self.canvasPlayer insertItem:nextItem afterItem:self.canvasPlayer.currentItem];
-		}
 	}
 	else {
 		[self.firstFrameView setHidden:YES];
-		[self.canvasPlayer removeAllItems];
+		// [self.canvasPlayer removeAllItems];
+		[self.canvasPlayerLayer setHidden:YES];
 		[self.canvasPlayer pause];
+	}
+	if(![nextVideoURL isEqualToString:@"remove"]) {
+		AVPlayerItem *nextItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:nextVideoURL]];
+		NSLog(@"canvasBackground nextItem: %@", nextItem);
+		[self.canvasPlayer insertItem:nextItem afterItem:nil];
 	}
 	for(AVPlayerItem *item in self.canvasPlayer.items) {
 		NSLog(@"canvasBackground item: %@", item);

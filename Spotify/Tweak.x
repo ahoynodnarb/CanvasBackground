@@ -15,7 +15,7 @@ SPTPlayerTrack *nextTrack;
 	SPTCanvasModelImplementation *canvasModel = viewModel.canvasModel;
 	NSURL *canvasModelURL = canvasModel.contentURL;
 	NSURL *returnedURL = [assetLoader localURLForAssetURL:canvasModelURL];
-	NSString *fallbackURL = canvasModelURL.absoluteString;
+	NSString *fallbackURL = (canvasModelURL.absoluteString) ? canvasModelURL.absoluteString : @"remove";
 	if(![[NSFileManager defaultManager] fileExistsAtPath:returnedURL.path]) {
 		NSLog(@"canvasBackground using fallback: %@", fallbackURL);
 		return fallbackURL;
