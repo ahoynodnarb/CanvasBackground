@@ -8,7 +8,7 @@
 @property(nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
 @property (nonatomic, strong) UIImageView *firstFrameView;
 @property (nonatomic, assign) BOOL isVisible;
-@property (nonatomic, strong) NSMutableArray *items;
+@property (nonatomic, strong) AVPlayerItem *previousItem;
 -(void)loopVideo;
 -(void)recreateCanvasPlayer:(NSNotification *)note;
 -(void)resizeCanvas;

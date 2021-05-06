@@ -3,7 +3,14 @@
 
 @interface SPTPlayerTrack : NSObject
 @end
+@interface SPTPlayerState : NSObject
+@end
+@interface SPTStatefulPlayerQueue : NSObject
+- (SPTPlayerTrack *)trackAtRelativePosition:(long long)arg1 forState:(id)arg2;
+@end
 @interface SPTStatefulPlayer : NSObject
+@property(readonly, nonatomic) SPTStatefulPlayerQueue *queue;
+@property(retain, nonatomic) SPTPlayerState *playerState;
 -(SPTPlayerTrack *)currentTrack;
 -(SPTPlayerTrack *)nextTrack;
 -(NSString *)getCanvasURLForTrack:(SPTPlayerTrack *)track;
@@ -18,8 +25,11 @@
 @interface SPTCanvasNowPlayingContentLoader : NSObject
 - (SPTCanvasContentLayerViewControllerViewModel *)canvasViewControllerViewModelForTrack:(id)arg1;
 @end
+@interface SPTVideoURLAssetLoaderImplementation : NSObject
+- (NSURL *)localURLForAssetURL:(NSURL *)arg1;
+@end
 
-SPTPlayerTrack *nextTrack;
+SPTVideoURLAssetLoaderImplementation *assetLoader;
 SPTCanvasNowPlayingContentLoader *loader;
 BOOL sentNotificationOnce;
 BOOL shouldSend;

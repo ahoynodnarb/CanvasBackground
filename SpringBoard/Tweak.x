@@ -1,3 +1,6 @@
+// TODO: Fix bug where it preloads canvas even if 
+// it's a new song without a canvas
+
 #import "SpringBoard.h"
 
 %hook SpringBoard
@@ -28,11 +31,9 @@
 %property (nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
 %property (nonatomic, strong) UIImageView *firstFrameView;
 %property (nonatomic, assign) BOOL isVisible;
-%property (nonatomic, strong) NSMutableArray *items;
 %new
 -(void)togglePlayer:(NSNotification *)note {
 	NSNumber *isPlaying = [[note userInfo] objectForKey:@"isPlaying"];
-	// NSLog(@"canvasBackground toggling player for lockscreen isPlaying: %@", isPlaying);
 	[isPlaying boolValue] ? [self.canvasPlayer play] : [self.canvasPlayer pause];
 	shouldPlayCanvas = [isPlaying boolValue];
 }
@@ -45,58 +46,44 @@
 -(void)recreateCanvasPlayer:(NSNotification *)note {
 	NSString *currentVideoURL = [[note userInfo] objectForKey:@"currentURL"];
 	NSString *nextVideoURL = [[note userInfo] objectForKey:@"nextURL"];
-	// NSLog(@"canvasBackground currentURL: %@ nextURL: %@", currentVideoURL, nextVideoURL);
+	BOOL isPrevious = [[[note userInfo] objectForKey:@"isPrevious"] boolValue];
 	if(![currentVideoURL isEqualToString:@"remove"]) {
-		// NSLog(@"canvasBackground count: %ld", [self.canvasPlayer.items count]);
-		for(AVPlayerItem *item in self.canvasPlayer.items) {
-			NSLog(@"canvasBackground item: %@", item);
-		}
-		if([self.canvasPlayer.items count] > 1) {
-			NSLog(@"canvasBackground advanced");
-			// NSLog(@"canvasBackground count: %ld", [self.canvasPlayer.items count]);
-			[self.canvasPlayer advanceToNextItem];
-			NSLog(@"canvasBackground currentItem: %@", self.canvasPlayer.currentItem);
+		AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
+		if(isPrevious) {
+			[self.canvasPlayer removeAllItems];
+			[self.canvasPlayer insertItem:currentItem afterItem:nil];
 		}
 		else {
-			NSLog(@"canvasBackground didn't advance");
-			NSLog(@"canvasBackground count: %ld", [self.canvasPlayer.items count]);
-			AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
-			[self.canvasPlayer insertItem:currentItem afterItem:nil];
-			NSLog(@"canvasBackground count: %ld", [self.canvasPlayer.items count]);
+			if([self.canvasPlayer.items count] > 1) {
+				NSLog(@"canvasBackground advanced");
+				[self.canvasPlayer advanceToNextItem];
+			}
+			else {
+				currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
+				[self.canvasPlayer insertItem:currentItem afterItem:self.canvasPlayer.currentItem];
+			}
 		}
-		// self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:self.canvasPlayer.currentItem];
-		// [[NSNotificationCenter defaultCenter] removeObserver:self];
-		// NSLog(@"canvasBackground currentItem: %@", self.canvasPlayer.currentItem);
 		[[NSNotificationCenter defaultCenter] addObserverForName:AVPlayerItemDidPlayToEndTimeNotification object:self.canvasPlayer.currentItem queue:nil usingBlock:^(NSNotification *note) {
-			// NSLog(@"canvasBackground object: %@");
 			[self.canvasPlayer.currentItem seekToTime:kCMTimeZero completionHandler:nil];
 			[self.canvasPlayer play];
 		}];
-		// AVURLAsset *asset = [AVURLAsset URLAssetWithURL:[(AVURLAsset *)nextItem.asset URL] options:nil];
-		// AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
-		// UIImage *firstFrame = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
-		// [self.firstFrameView setImage:firstFrame];
-		// self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:self.canvasPlayer.currentItem];
-		// [[NSNotificationCenter defaultCenter] removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:self.canvasPlayer.currentItem];
 		if(self.isVisible) {
-			// NSLog(@"canvasBackground playing after recreating");
 			[self.canvasPlayer play];
+		}
+		if(![nextVideoURL isEqualToString:@"remove"]) {
+			AVPlayerItem *nextItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:nextVideoURL]];
+			NSLog(@"canvasBackground nextItem: %@", nextItem);
+			[self.canvasPlayer insertItem:nextItem afterItem:self.canvasPlayer.currentItem];
 		}
 	}
 	else {
-		// NSLog(@"canvasBackground removing");
 		[self.firstFrameView setHidden:YES];
 		[self.canvasPlayer removeAllItems];
+		[self.canvasPlayer pause];
 	}
-	if(![nextVideoURL isEqualToString:@"remove"]) {
-		NSLog(@"canvasBackground inserting");
-		AVPlayerItem *nextItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:nextVideoURL]];
-		// [self.canvasPlayer removeAllItems];
-		[self.canvasPlayer insertItem:nextItem afterItem:nil];
+	for(AVPlayerItem *item in self.canvasPlayer.items) {
+		NSLog(@"canvasBackground item: %@", item);
 	}
-	// for(AVPlayerItem *item in self.canvasPlayer.items) {
-	// 	NSLog(@"canvasBackground item: %@", item);
-	// }
 }
 -(void)viewDidLoad {
 	%orig;
