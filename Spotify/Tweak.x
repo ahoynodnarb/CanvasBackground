@@ -19,15 +19,11 @@ SPTPlayerTrack *nextTrack;
 	NSString *fallbackURLString = canvasModelURL.absoluteString;
 	NSString *localURLString = localURL.absoluteString;
 	if(![[NSFileManager defaultManager] fileExistsAtPath:localURL.path] && fallbackURLString) {
-		NSLog(@"canvasBackground using fallback: %@", fallbackURLString);
-		// return fallbackURL;
 		[self.userInfo setObject:fallbackURLString forKey:key];
 	}
 	else if(localURLString) {
-		NSLog(@"canvasBackground using localURLString: %@", localURLString);
 		[self.userInfo setObject:localURLString forKey:key];
 	}
-	// return returnedString;
 }
 %new
 -(void)sendNotification {
@@ -40,26 +36,20 @@ SPTPlayerTrack *nextTrack;
 	shouldSend = NO;
 	[self addCanvasToUserInfo:[self nextTrack] key:@"nextURL"];
 	[self.userInfo setObject:@(isPrevious) forKey:@"isPrevious"];
-	// NSString *previousTrackURL = [self getCanvasURLForTrack:previousTrack];
-	// NSString *currentTrackURL = [self getCanvasURLForTrack:[self currentTrack]];
-	// NSString *nextTrackURL = [self getCanvasURLForTrack:[self nextTrack]];
-	// NSLog(@"canvasBackground currentTrackURL: %@ nextTrackURL: %@ previousTrackURL: %@", currentTrackURL, nextTrackURL, previousTrackURL);
-	for(id key in self.userInfo) {
-		NSLog(@"canvasBackground key: %@ value: %@", key, [self.userInfo objectForKey:key]);
-	}
 	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:self.userInfo];
 	[self.userInfo removeAllObjects];
 }
 -(SPTPlayerTrack *)nextTrack {
 	if(shouldSend) {
-		[self sendNotification];
+		[self performSelectorInBackground:@selector(sendNotification) withObject:nil];
 	}
 	shouldSend = YES;
 	return %orig;
 }
 -(void)setPaused:(_Bool)arg1 {
 	if(!sentNotificationOnce) {
-		[self sendNotification];
+		[self performSelectorInBackground:@selector(sendNotification) withObject:nil];
+		// [self sendNotification];
 		sentNotificationOnce = YES;
 	}
 	// NSLog(@"canvasBackground setPaused arg1: %d numberValue: %@", arg1, [NSNumber numberWithBool:arg1]);
