@@ -23,3 +23,6 @@
 -(void)resizeCanvas;
 -(void)togglePlayer:(NSNotification *)note;
 @end
+@interface CALayer ()
+@property (copy) NSString *securityMode;
+@end

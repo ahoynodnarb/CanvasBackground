@@ -1,17 +1,9 @@
 #import "Spotify.h"
 
-SPTPlayerTrack *nextTrack;
-%hook SPTCanvasNowPlayingContentLoader
--(id)initWithCanvasTrackChecker:(id)arg1 viewModelFactory:(id)arg2 contentReloader:(id)arg3 contentLoaderTracker:(id)arg4 nowPlayingState:(id)arg5 {
-	loader = self;
-	return %orig;
-}
-%end
 %hook SPTStatefulPlayer
 %property (nonatomic, strong) NSMutableDictionary *userInfo;
 %new
 -(void)addCanvasToUserInfo:(SPTPlayerTrack *)track key:(NSString *)key {
-	// NSLog(@"canvasBackground test track: %@", track);
 	SPTCanvasContentLayerViewControllerViewModel *viewModel = [loader canvasViewControllerViewModelForTrack:track];
 	SPTCanvasModelImplementation *canvasModel = viewModel.canvasModel;
 	NSURL *canvasModelURL = canvasModel.contentURL;
@@ -28,42 +20,32 @@ SPTPlayerTrack *nextTrack;
 %new
 -(void)sendNotification {
 	self.userInfo = [[NSMutableDictionary alloc] init];
-	SPTPlayerTrack *previousTrack = [self.queue trackAtRelativePosition:-1 forState:self.playerState];
-	BOOL isPrevious = [previousTrack isEqual:[self currentTrack]];
-	previousTrack = (isPrevious) ? [self.queue trackAtRelativePosition:-2 forState:self.playerState] : previousTrack;
-	[self addCanvasToUserInfo:previousTrack key:@"previousURL"];
 	[self addCanvasToUserInfo:[self currentTrack] key:@"currentURL"];
-	shouldSend = NO;
-	[self addCanvasToUserInfo:[self nextTrack] key:@"nextURL"];
-	[self.userInfo setObject:@(isPrevious) forKey:@"isPrevious"];
 	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:self.userInfo];
 	[self.userInfo removeAllObjects];
 }
 -(SPTPlayerTrack *)nextTrack {
-	if(shouldSend) {
-		[self performSelectorInBackground:@selector(sendNotification) withObject:nil];
-	}
-	shouldSend = YES;
+	[self performSelectorInBackground:@selector(sendNotification) withObject:nil];
 	return %orig;
 }
 -(void)setPaused:(_Bool)arg1 {
-	if(!sentNotificationOnce) {
+	static dispatch_once_t once;
+	dispatch_once(&once, ^{
 		[self performSelectorInBackground:@selector(sendNotification) withObject:nil];
-		// [self sendNotification];
-		sentNotificationOnce = YES;
-	}
-	// NSLog(@"canvasBackground setPaused arg1: %d numberValue: %@", arg1, [NSNumber numberWithBool:arg1]);
+	});
 	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"togglePlayer" object:nil userInfo:@{@"isPlaying": [NSNumber numberWithBool:!arg1]}];
 	return %orig;
 }
 %end
 %hook SPTVideoURLAssetLoaderImplementation
-- (id)initWithNetworkConnectivityController:(id)arg1 requestAccountant:(id)arg2 serviceIdentifier:(id)arg3 {
+- (id)initWithNetworkConnectivityController:(id)arg1 requestAccountant:(id)arg2 serviceIdentifier:(id)arg3 HTTPMaximumConnectionsPerHost:(long long)arg4 timeoutIntervalForRequest:(double)arg5 timeoutIntervalForResource:(double)arg6 {
 	assetLoader = self;
 	return %orig;
 }
-- (id)initWithNetworkConnectivityController:(id)arg1 requestAccountant:(id)arg2 serviceIdentifier:(id)arg3 HTTPMaximumConnectionsPerHost:(long long)arg4 timeoutIntervalForRequest:(double)arg5 timeoutIntervalForResource:(double)arg6 {
-	assetLoader = self;
+%end
+%hook SPTCanvasNowPlayingContentLoader
+-(id)initWithCanvasTrackChecker:(id)arg1 viewModelFactory:(id)arg2 contentReloader:(id)arg3 contentLoaderTracker:(id)arg4 nowPlayingState:(id)arg5 {
+	loader = self;
 	return %orig;
 }
 %end

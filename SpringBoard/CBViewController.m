@@ -8,11 +8,13 @@
 }
 -(void)resizeCanvas {
 	NSLog(@"canvasBackground resizing canvas");
-	[self.firstFrameView setFrame:[[self view].superview frame]];
-	[self.canvasPlayerLayer setFrame:[[[self view].superview layer] bounds]];
+	// [self.view.superview setFrame:[[self view].superview.superview frame]];
+	// [self.firstFrameView setFrame:[[self view].superview frame]];
+	// [self.canvasPlayerLayer setFrame:[[[self view].superview layer] bounds]];
+	[self.firstFrameView setFrame:[[UIScreen mainScreen] bounds]];
+	[self.canvasPlayerLayer setFrame:[[UIScreen mainScreen] bounds]];
 }
 -(void)recreateCanvasPlayer:(NSNotification *)note {
-	NSLog(@"canvasBackground recreating player");
 	NSString *currentVideoURL = [[note userInfo] objectForKey:@"currentURL"];
 	if(currentVideoURL) {
 		AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
@@ -27,12 +29,16 @@
 		}
 	}
 	else {
+		[self.firstFrameView setHidden:YES];
 		[self.canvasPlayer removeAllItems];
 	}
 }
+-(void)dealloc {
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
+}
 -(void)viewDidLoad {
 	[super viewDidLoad];
-	NSLog(@"canvasBackground viewDidLoad called");
 	self.firstFrameView = [[UIImageView alloc] init];
 	[self.firstFrameView setFrame:[[self view] frame]];
 	[self.firstFrameView setContentMode:UIViewContentModeScaleAspectFill];
@@ -46,16 +52,17 @@
 	[self.canvasPlayerLayer setFrame:[[[self view] layer] bounds]];
 	[self.canvasPlayerLayer setHidden:YES];
 	[[[self view] layer] insertSublayer:self.canvasPlayerLayer atIndex:0];
+	[[[self view] layer] setSecurityMode:@"secure"];
+	// NSLog(@"canvasBackground securityMode: %@", [self.view layer].securityMode);
 	[[self view] insertSubview:self.firstFrameView atIndex:0];
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
-	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
+	// [[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(recreateCanvasPlayer:) name:@"recreateCanvas" object:@"com.spotify.client"];
-	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(resizeCanvas) name:@"resizeCanvas" object:nil];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(togglePlayer:) name:@"togglePlayer" object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resizeCanvas) name:@"resizeCanvas" object:nil];
 }
 -(void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
-	NSLog(@"canvasBackground viewWillAppear called");
 	self.isVisible = YES;
 	[self.canvasPlayerLayer setHidden:NO];
 	[self resizeCanvas];

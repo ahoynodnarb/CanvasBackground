@@ -32,5 +32,3 @@
 
 SPTVideoURLAssetLoaderImplementation *assetLoader;
 SPTCanvasNowPlayingContentLoader *loader;
-BOOL sentNotificationOnce;
-BOOL shouldSend;
