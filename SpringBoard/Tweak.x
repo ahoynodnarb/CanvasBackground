@@ -7,6 +7,7 @@
 }
 %end
 
+
 %hook SBMediaController
 -(void)_setNowPlayingApplication:(id)arg1 {
 	%orig;

@@ -4,7 +4,7 @@
 
 @interface SPTPlayerTrack : NSObject
 @end
-@interface SPTStatefulPlayer : NSObject
+@interface SPTStatefulPlayerImplementation : NSObject
 @property (nonatomic, strong) NSMutableDictionary *userInfo;
 -(SPTPlayerTrack *)currentTrack;
 -(SPTPlayerTrack *)nextTrack;
@@ -28,4 +28,4 @@
 
 // SPTCanvasModelImplementation *canvasModel;
 SPTVideoURLAssetLoaderImplementation *assetLoader;
-SPTCanvasNowPlayingContentLoader *loader;
+SPTCanvasNowPlayingContentLoader *contentLoader;

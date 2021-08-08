@@ -1,6 +1,11 @@
 #import "Spotify.h"
 
-%hook SPTStatefulPlayer
+%hook SPTCanvasCompatibilityManager
++(_Bool)shouldEnableCanvasForDevice {
+	return YES;
+}
+%end
+%hook SPTStatefulPlayerImplementation
 %property (nonatomic, strong) NSMutableDictionary *userInfo;
 // %new
 // -(void)setArtworkImage {
@@ -18,9 +23,9 @@
 // }
 %new
 -(void)addCanvasToUserInfo:(SPTPlayerTrack *)track key:(NSString *)key {
-	SPTCanvasContentLayerViewControllerViewModel *viewModel = [loader canvasViewControllerViewModelForTrack:track];
-	SPTCanvasModelImplementation *canvasModel = viewModel.canvasModel;
-	NSURL *canvasModelURL = canvasModel.contentURL;
+	// SPTCanvasContentLayerViewControllerViewModel *viewModel = [loader canvasViewControllerViewModelForTrack:track];
+	// SPTCanvasModelImplementation *canvasModel = viewModel.canvasModel;
+	NSURL *canvasModelURL = [contentLoader canvasViewControllerViewModelForTrack:track].canvasModel.contentURL;
 	NSURL *localURL = [assetLoader localURLForAssetURL:canvasModelURL];
 	NSString *fallbackURLString = canvasModelURL.absoluteString;
 	NSString *localURLString = localURL.absoluteString;
@@ -29,6 +34,7 @@
 }
 %new
 -(void)sendNotification {
+	NSLog(@"canvasBackground sending notification");
 	self.userInfo = [[NSMutableDictionary alloc] init];
 	// [self setArtworkImage];
 	[self addCanvasToUserInfo:[self currentTrack] key:@"currentURL"];
@@ -55,6 +61,6 @@
 %end
 %hook SPTCanvasNowPlayingContentLoader
 -(id)initWithCanvasTrackChecker:(id)arg1 viewModelFactory:(id)arg2 contentReloader:(id)arg3 contentLoaderTracker:(id)arg4 nowPlayingState:(id)arg5 {
-	return loader = %orig;
+	return contentLoader = %orig;
 }
 %end

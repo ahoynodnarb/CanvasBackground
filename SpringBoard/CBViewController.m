@@ -22,6 +22,7 @@
 }
 -(void)recreateCanvasPlayer:(NSNotification *)note {
 	NSString *currentVideoURL = [[note userInfo] objectForKey:@"currentURL"];
+	NSLog(@"canvasBackground recreating: %@", currentVideoURL);
 	if(currentVideoURL) {
 		[self.bufferingView setHidden:NO];
 		AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];

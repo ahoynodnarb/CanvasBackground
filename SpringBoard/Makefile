@@ -1,6 +1,7 @@
-export TARGET = iphone:clang:13.5:13.0
+export TARGET = iphone:clang:14.4
 INSTALL_TARGET_PROCESSES = SpringBoard
 
+PREFIX=$(THEOS)/toolchain/Xcode.xctoolchain/usr/bin/
 
 include $(THEOS)/makefiles/common.mk
 
@@ -8,6 +9,6 @@ TWEAK_NAME = CanvasBackgroundSpringBoard
 
 CanvasBackgroundSpringBoard_FILES = Tweak.x CBViewController.m
 CanvasBackgroundSpringBoard_CFLAGS = -fobjc-arc
-CanvasBackgroundSpringBoard_PRIVATE_FRAMEWORKS = MediaRemote
 
 include $(THEOS_MAKE_PATH)/tweak.mk
+include $(THEOS_MAKE_PATH)/aggregate.mk
