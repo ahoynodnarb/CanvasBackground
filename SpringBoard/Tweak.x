@@ -11,9 +11,8 @@
 %hook SBMediaController
 -(void)_setNowPlayingApplication:(id)arg1 {
 	%orig;
-	if(!arg1) {
-		[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client"];
-	}
+	if(!arg1) [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client"];
+    else [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"sendNotification" object:@"com.spotify.client"];
 }
 %end
 

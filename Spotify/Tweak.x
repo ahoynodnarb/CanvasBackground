@@ -5,6 +5,14 @@
 	return YES;
 }
 %end
+
+%hook SPTCanvasVideoLoaderImplementation
+- (id)initWithCanvasTrackChecker:(id)arg1 videoAssetLoader:(id)arg2 metadataResolver:(id)arg3 track:(id)arg4 exporterBlock:(id)arg5 {
+    NSLog(@"cBack %@", NSStringFromSelector(_cmd));
+    return %orig;
+}
+%end
+
 %hook SPTStatefulPlayerImplementation
 %property (nonatomic, strong) NSMutableDictionary *userInfo;
 // %new
@@ -25,19 +33,29 @@
 -(void)addCanvasToUserInfo:(SPTPlayerTrack *)track key:(NSString *)key {
 	// SPTCanvasContentLayerViewControllerViewModel *viewModel = [loader canvasViewControllerViewModelForTrack:track];
 	// SPTCanvasModelImplementation *canvasModel = viewModel.canvasModel;
+    // NSLog(@"cBack file: %@", [(AVURLAsset *)currentSource.playerItem.asset URL]);
+    // handles finding the cached canvas
+    // if it can't find it, it'll use a fallback url to download it
 	NSURL *canvasModelURL = [contentLoader canvasViewControllerViewModelForTrack:track].canvasModel.contentURL;
 	NSURL *localURL = [assetLoader localURLForAssetURL:canvasModelURL];
 	NSString *fallbackURLString = canvasModelURL.absoluteString;
 	NSString *localURLString = localURL.absoluteString;
-	if(![[NSFileManager defaultManager] fileExistsAtPath:localURL.path] && fallbackURLString) [self.userInfo setObject:fallbackURLString forKey:key];
-	else if(localURLString) [self.userInfo setObject:localURLString forKey:key];
+    NSLog(@"canvasBackground URLs: %@ %@ %@ %@", canvasModelURL, localURL, fallbackURLString, localURLString);
+	if(![[NSFileManager defaultManager] fileExistsAtPath:localURL.path] && fallbackURLString) {
+        NSLog(@"canvasBackground setting object");
+        [self.userInfo setObject:fallbackURLString forKey:key];
+    }
+	else if(localURLString) {
+        NSLog(@"canvasBackground setting object");
+        [self.userInfo setObject:localURLString forKey:key];
+    }
 }
 %new
 -(void)sendNotification {
-	NSLog(@"canvasBackground sending notification");
 	self.userInfo = [[NSMutableDictionary alloc] init];
 	// [self setArtworkImage];
 	[self addCanvasToUserInfo:[self currentTrack] key:@"currentURL"];
+	NSLog(@"canvasBackground sending notification");
 	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:self.userInfo];
 	[self.userInfo removeAllObjects];
 }
@@ -45,13 +63,19 @@
 	[self performSelectorInBackground:@selector(sendNotification) withObject:nil];
 	return %orig;
 }
--(void)setPaused:(_Bool)arg1 {
-	static dispatch_once_t once;
-	dispatch_once(&once, ^{
-		[self performSelectorInBackground:@selector(sendNotification) withObject:nil];
-	});
-	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"togglePlayer" object:nil userInfo:@{@"isPlaying": [NSNumber numberWithBool:!arg1]}];
+-(void)setIsPaused:(_Bool)arg1 {
+	// static dispatch_once_t once;
+	// dispatch_once(&once, ^{
+	// });
+    NSLog(@"canvasBackground pausing");
+	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"togglePlayer" object:@"com.spotify.client" userInfo:@{@"isPlaying": [NSNumber numberWithBool:!arg1]}];
+    // [self performSelectorInBackground:@selector(sendNotification) withObject:nil];
 	return %orig;
+}
+- (id)initWithPlayer:(id)arg1 {
+    [[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
+    [[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(sendNotification) name:@"sendNotification" object:@"com.spotify.client"];
+    return %orig;
 }
 %end
 %hook SPTVideoURLAssetLoaderImplementation

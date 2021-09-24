@@ -11,6 +11,7 @@
 // 	return nowPlayingArtwork;
 // }
 -(void)togglePlayer:(NSNotification *)note {
+    NSLog(@"canvasBackground toggling");
 	BOOL isPlaying = [[[note userInfo] objectForKey:@"isPlaying"] boolValue];
 	if(isPlaying) [self.canvasPlayer play];
 	else [self.canvasPlayer pause];
@@ -21,8 +22,11 @@
 	[self.canvasPlayerLayer setFrame:[[UIScreen mainScreen] bounds]];
 }
 -(void)recreateCanvasPlayer:(NSNotification *)note {
+    NSLog(@"canvasBackground note: %@", note);
 	NSString *currentVideoURL = [[note userInfo] objectForKey:@"currentURL"];
-	NSLog(@"canvasBackground recreating: %@", currentVideoURL);
+    if([currentVideoURL isEqualToString:self.currentTrack]) return;
+    self.currentTrack = currentVideoURL;
+	NSLog(@"canvasBackground recreating player: %@", currentVideoURL);
 	if(currentVideoURL) {
 		[self.bufferingView setHidden:NO];
 		AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
@@ -38,12 +42,11 @@
 		[self.canvasPlayer removeAllItems];
 	}
 }
--(void)dealloc {
-	[[NSNotificationCenter defaultCenter] removeObserver:self];
-	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
-}
+// -(void)dealloc {
+// }
 -(void)viewDidLoad {
 	[super viewDidLoad];
+	NSLog(@"canvasBackground viewDidLoad called");
 	self.bufferingView = [[UIImageView alloc] init];
 	[self.bufferingView setFrame:[[self view] frame]];
 	[self.bufferingView setContentMode:UIViewContentModeScaleAspectFill];
@@ -60,8 +63,10 @@
 	[[[self view] layer] setSecurityMode:@"secure"];
 	[[self view] insertSubview:self.bufferingView atIndex:0];
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(recreateCanvasPlayer:) name:@"recreateCanvas" object:@"com.spotify.client"];
-	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(togglePlayer:) name:@"togglePlayer" object:nil];
+	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(togglePlayer:) name:@"togglePlayer" object:@"com.spotify.client"];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resizeCanvas) name:@"resizeCanvas" object:nil];
 }
 -(void)viewWillAppear:(BOOL)animated {

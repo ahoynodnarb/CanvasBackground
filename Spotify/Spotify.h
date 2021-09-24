@@ -1,8 +1,14 @@
 #import <Foundation/NSDistributedNotificationCenter.h>
 #import <MediaRemote/MediaRemote.h>
+#import <AVKit/AVKit.h>
 #import <UIKit/UIKit.h>
 
 @interface SPTPlayerTrack : NSObject
+@property(readonly, nonatomic) NSURL *coverArtURLXLarge;
+@property(readonly, nonatomic) NSURL *coverArtURLLarge;
+@property(readonly, nonatomic) NSURL *coverArtURLSmall;
+@property(readonly, nonatomic) NSURL *coverArtURL;
+@property(readonly, nonatomic) NSURL *imageURL;
 @end
 @interface SPTStatefulPlayerImplementation : NSObject
 @property (nonatomic, strong) NSMutableDictionary *userInfo;
@@ -13,7 +19,6 @@
 -(void)sendNotification;
 @end
 @interface SPTCanvasModelImplementation : NSObject
-@property(copy, nonatomic) NSURL *albumCoverURL;
 @property (readonly, copy, nonatomic) NSURL *contentURL;
 @end
 @interface SPTCanvasContentLayerViewControllerViewModel : NSObject
@@ -26,6 +31,5 @@
 - (NSURL *)localURLForAssetURL:(NSURL *)arg1;
 @end
 
-// SPTCanvasModelImplementation *canvasModel;
 SPTVideoURLAssetLoaderImplementation *assetLoader;
 SPTCanvasNowPlayingContentLoader *contentLoader;

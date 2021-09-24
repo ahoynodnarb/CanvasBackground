@@ -8,6 +8,7 @@
 -(BOOL)isPlaying;
 @end
 @interface CBViewController : UIViewController
+@property (nonatomic, strong) NSString *currentTrack;
 @property (nonatomic, strong) AVQueuePlayer *canvasPlayer;
 @property (nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
 @property (nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
