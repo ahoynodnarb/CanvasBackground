@@ -28,11 +28,11 @@
     [homescreenController.view.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
     [homescreenController.view.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
     [homescreenController.view.heightAnchor constraintEqualToConstant:homescreenController.view.frame.size.height].active = YES;
-    homescreenController.view.translatesAutoresizingMaskIntoConstraints = NO;
-    [homescreenController.view.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor].active = YES;
-    [homescreenController.view.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
-    [homescreenController.view.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
-    [homescreenController.view.heightAnchor constraintEqualToConstant:homescreenController.view.frame.size.height].active = YES;
+    homescreenController.bufferingView.translatesAutoresizingMaskIntoConstraints = NO;
+    [homescreenController.bufferingView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor].active = YES;
+    [homescreenController.bufferingView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
+    [homescreenController.bufferingView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
+    [homescreenController.bufferingView.heightAnchor constraintEqualToConstant:homescreenController.bufferingView.frame.size.height].active = YES;
 }
 %end
 %hook CSFixedFooterViewController
@@ -48,10 +48,10 @@
     [lockscreenController.view.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
     [lockscreenController.view.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
     [lockscreenController.view.heightAnchor constraintEqualToConstant:lockscreenController.view.frame.size.height].active = YES;
-    lockscreenController.view.translatesAutoresizingMaskIntoConstraints = NO;
-    [lockscreenController.view.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor].active = YES;
-    [lockscreenController.view.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
-    [lockscreenController.view.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
-    [lockscreenController.view.heightAnchor constraintEqualToConstant:lockscreenController.view.frame.size.height].active = YES;
+    lockscreenController.bufferingView.translatesAutoresizingMaskIntoConstraints = NO;
+    [lockscreenController.bufferingView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor].active = YES;
+    [lockscreenController.bufferingView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
+    [lockscreenController.bufferingView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
+    [lockscreenController.bufferingView.heightAnchor constraintEqualToConstant:lockscreenController.view.frame.size.height].active = YES;
 }
 %end
