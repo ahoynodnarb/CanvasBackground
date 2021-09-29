@@ -17,20 +17,41 @@
 %end
 
 %hook SBHomeScreenViewController
--(void)viewDidLoad {
+-(void)loadView {
 	%orig;
 	homescreenController = [[CBViewController alloc] init];
-	homescreenController.view = [[UIView alloc] initWithFrame:[self.view bounds]];
-	[self.view insertSubview:homescreenController.view atIndex:0];
-	[homescreenController viewDidLoad];
+	if(!homescreenController.view) homescreenController.view = [[UIView alloc] initWithFrame:[[self view] bounds]];
+    [homescreenController viewDidLoad];
+    [[self view] insertSubview:[homescreenController view] atIndex:0];
+    homescreenController.view.translatesAutoresizingMaskIntoConstraints = NO;
+    [homescreenController.view.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor].active = YES;
+    [homescreenController.view.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
+    [homescreenController.view.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
+    [homescreenController.view.heightAnchor constraintEqualToConstant:homescreenController.view.frame.size.height].active = YES;
+    homescreenController.view.translatesAutoresizingMaskIntoConstraints = NO;
+    [homescreenController.view.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor].active = YES;
+    [homescreenController.view.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
+    [homescreenController.view.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
+    [homescreenController.view.heightAnchor constraintEqualToConstant:homescreenController.view.frame.size.height].active = YES;
 }
 %end
-%hook CSCoverSheetViewController
--(void)viewDidLoad {
-	%orig;
-	lockscreenController = [[CBViewController alloc] init];
-	lockscreenController.view = [[UIView alloc] initWithFrame:[self.view bounds]];
-	[self.view insertSubview:lockscreenController.view atIndex:0];
-	[lockscreenController viewDidLoad];
+%hook CSFixedFooterViewController
+-(void)loadView {
+    %orig;
+    lockscreenController = [[CBViewController alloc] init];
+	if(!lockscreenController.view) lockscreenController.view = [[UIView alloc] initWithFrame:[[self view] bounds]];
+    [lockscreenController viewDidLoad];
+    [[self view] addSubview:[lockscreenController view]];
+    [[self view] bringSubviewToFront:[lockscreenController view]];
+    lockscreenController.view.translatesAutoresizingMaskIntoConstraints = NO;
+    [lockscreenController.view.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor].active = YES;
+    [lockscreenController.view.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
+    [lockscreenController.view.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
+    [lockscreenController.view.heightAnchor constraintEqualToConstant:lockscreenController.view.frame.size.height].active = YES;
+    lockscreenController.view.translatesAutoresizingMaskIntoConstraints = NO;
+    [lockscreenController.view.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor].active = YES;
+    [lockscreenController.view.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
+    [lockscreenController.view.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
+    [lockscreenController.view.heightAnchor constraintEqualToConstant:lockscreenController.view.frame.size.height].active = YES;
 }
 %end

@@ -16,7 +16,6 @@
 @property (nonatomic, assign) BOOL isVisible;
 @property (nonatomic, assign) BOOL shouldPlayCanvas;
 -(void)recreateCanvasPlayer:(NSNotification *)note;
--(void)resizeCanvas;
 -(void)togglePlayer:(NSNotification *)note;
 @end
 @interface CALayer ()
