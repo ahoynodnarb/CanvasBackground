@@ -19,9 +19,9 @@
 %hook SBHomeScreenViewController
 -(void)loadView {
 	%orig;
+    NSLog(@"canvasBackground loaded in SBHomeScreenViewController");
 	homescreenController = [[CBViewController alloc] init];
 	if(!homescreenController.view) homescreenController.view = [[UIView alloc] initWithFrame:[[self view] bounds]];
-    [homescreenController viewDidLoad];
     [[self view] insertSubview:[homescreenController view] atIndex:0];
     homescreenController.view.translatesAutoresizingMaskIntoConstraints = NO;
     [homescreenController.view.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor].active = YES;
@@ -38,9 +38,9 @@
 %hook CSFixedFooterViewController
 -(void)loadView {
     %orig;
+    NSLog(@"canvasBackground loaded in CSFixedFooterViewController");
     lockscreenController = [[CBViewController alloc] init];
 	if(!lockscreenController.view) lockscreenController.view = [[UIView alloc] initWithFrame:[[self view] bounds]];
-    [lockscreenController viewDidLoad];
     [[self view] addSubview:[lockscreenController view]];
     [[self view] bringSubviewToFront:[lockscreenController view]];
     lockscreenController.view.translatesAutoresizingMaskIntoConstraints = NO;
