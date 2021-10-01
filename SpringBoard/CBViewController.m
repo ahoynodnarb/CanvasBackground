@@ -38,6 +38,9 @@
 		[self.canvasPlayer removeAllItems];
 	}
 }
+-(BOOL)_shouldCreateContextAsSecure {
+    return YES;
+}
 -(void)viewDidLoad {
 	[super viewDidLoad];
 	self.bufferingView = [[UIImageView alloc] initWithFrame:[[self view] frame]];
@@ -52,7 +55,6 @@
 	[self.canvasPlayerLayer setFrame:[[self view] bounds]];
 	[self.canvasPlayerLayer setHidden:YES];
 	[[[self view] layer] insertSublayer:self.canvasPlayerLayer atIndex:0];
-	[[[self view] layer] setSecurityMode:@"secure"];
 	[[self view] insertSubview:self.bufferingView atIndex:0];
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];

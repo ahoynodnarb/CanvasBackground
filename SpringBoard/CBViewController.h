@@ -18,6 +18,3 @@
 -(void)recreateCanvasPlayer:(NSNotification *)note;
 -(void)togglePlayer:(NSNotification *)note;
 @end
-@interface CALayer ()
--(void)setSecurityMode:(NSString *)arg1;
-@end
