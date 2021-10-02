@@ -1,17 +1,6 @@
 #import "CBViewController.h"
 
 @implementation CBViewController
--(UIImage *)getArtworkImage {
-    NSLog(@"canvasBackground %@", NSStringFromSelector(_cmd));
-	UIImage *__block nowPlayingArtwork = [[UIImage alloc] init];
-	MRMediaRemoteGetNowPlayingInfo(dispatch_get_main_queue(), ^(CFDictionaryRef information) {
-        NSDictionary* dict = (__bridge NSDictionary *)information;
-        nowPlayingArtwork = [UIImage imageWithData:[dict objectForKey:(__bridge NSString*)kMRMediaRemoteNowPlayingInfoArtworkData]];
-		NSLog(@"canvasBackground data: %@", [dict objectForKey:(__bridge NSString*)kMRMediaRemoteNowPlayingInfoArtworkData]);
-    });
-    NSLog(@"canvasBackground artwork: %@", nowPlayingArtwork);
-	return nowPlayingArtwork;
-}
 -(void)togglePlayer:(NSNotification *)note {
 	BOOL isPlaying = [[[note userInfo] objectForKey:@"isPlaying"] boolValue];
 	if(isPlaying) [self.canvasPlayer play];
@@ -19,45 +8,37 @@
 	self.shouldPlayCanvas = isPlaying;
 }
 -(void)recreateCanvasPlayer:(NSNotification *)note {
-    NSLog(@"canvasBackground recreating");
 	NSString *currentVideoURL = [[note userInfo] objectForKey:@"currentURL"];
-    // if(!currentVideoURL) {
-    //     [self.bufferingView setHidden:NO];
-    //     [self.bufferingView setImage:[self getArtworkImage]];
-	// 	[self.canvasPlayer removeAllItems];
-    // }
-    // if([currentVideoURL isEqualToString:self.currentTrack]) return;
-    // self.currentTrack = currentVideoURL;
+    NSData *currentImageData = [[note userInfo] objectForKey:@"artwork"];
     BOOL isDirectory = NO;
 	if([[NSFileManager defaultManager] fileExistsAtPath:[[NSURL URLWithString:currentVideoURL] path] isDirectory:&isDirectory] && !isDirectory) {
-        NSLog(@"canvasBackground URL: %@", currentVideoURL);
-		[self.bufferingView setHidden:NO];
+		[self.thumbnailView setHidden:NO];
 		AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
 		AVURLAsset *asset = [AVURLAsset URLAssetWithURL:[(AVURLAsset *)currentItem.asset URL] options:nil];
 		AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
 		UIImage *firstFrame = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
-		[self.bufferingView setImage:firstFrame];
+		[self.thumbnailView setImage:firstFrame];
 		self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:currentItem];
 		if(self.isVisible) [self.canvasPlayer play];
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            [self.bufferingView setHidden:YES];
+            [self.thumbnailView setHidden:YES];
         });
 	}
 	else {
-        NSLog(@"canvasBackground artwork: %@", [[note userInfo] objectForKey:@"artwork"]);
-		[self.bufferingView setHidden:NO];
-        [self.bufferingView setImage:[UIImage imageWithData:[[note userInfo] objectForKey:@"artwork"]]];
+		[self.thumbnailView setHidden:NO];
+        [self.thumbnailView setImage:[UIImage imageWithData:currentImageData]];
 		[self.canvasPlayer removeAllItems];
 	}
 }
 -(void)viewDidLoad {
 	[super viewDidLoad];
-	self.bufferingView = [[UIImageView alloc] initWithFrame:[[self view] frame]];
+	self.thumbnailView = [[UIImageView alloc] initWithFrame:[[self view] frame]];
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
-	[self.bufferingView setContentMode:UIViewContentModeScaleAspectFill];
-	[self.bufferingView setClipsToBounds:YES];
-	[self.bufferingView setHidden:YES];
+    [self.view setClipsToBounds:YES];
+    [self.view setContentMode:UIViewContentModeScaleAspectFill];
+	[self.thumbnailView setContentMode:UIViewContentModeScaleAspectFill];
+	[self.thumbnailView setHidden:YES];
 	[self.canvasPlayer setVolume:0];
 	[self.canvasPlayer setPreventsDisplaySleepDuringVideoPlayback:NO];
 	[self.canvasPlayerLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
@@ -65,14 +46,17 @@
 	[self.canvasPlayerLayer setHidden:YES];
 	[[[self view] layer] insertSublayer:self.canvasPlayerLayer atIndex:0];
 	[[[self view] layer] setSecurityMode:@"secure"];
-	[[self view] insertSubview:self.bufferingView atIndex:0];
+	[[self view] insertSubview:self.thumbnailView atIndex:0];
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(recreateCanvasPlayer:) name:@"recreateCanvas" object:@"com.spotify.client"];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(togglePlayer:) name:@"togglePlayer" object:@"com.spotify.client"];
 }
 -(void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
+    [self.view setFrame:self.view.superview.bounds];
+    [self.thumbnailView setFrame:self.view.superview.bounds];
     [self.canvasPlayerLayer setFrame:[[self view] bounds]];
 }
 -(void)viewWillAppear:(BOOL)animated {

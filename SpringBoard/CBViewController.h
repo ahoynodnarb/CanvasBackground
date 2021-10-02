@@ -13,10 +13,9 @@
 @property (nonatomic, strong) AVQueuePlayer *canvasPlayer;
 @property (nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
 @property (nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
-@property (nonatomic, strong) UIImageView *bufferingView;
+@property (nonatomic, strong) UIImageView *thumbnailView;
 @property (nonatomic, assign) BOOL isVisible;
 @property (nonatomic, assign) BOOL shouldPlayCanvas;
--(UIImage *)getArtworkImage;
 -(void)recreateCanvasPlayer:(NSNotification *)note;
 -(void)togglePlayer:(NSNotification *)note;
 @end
