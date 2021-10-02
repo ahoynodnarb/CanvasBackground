@@ -20,13 +20,16 @@
 		[self.thumbnailView setImage:firstFrame];
 		self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:currentItem];
 		if(self.isVisible) [self.canvasPlayer play];
+        self.shouldRemoveImage = YES;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            [self.thumbnailView setHidden:YES];
+            // we need this because of asynchronous bullshit
+            [self.thumbnailView setHidden:self.shouldRemoveImage];
         });
 	}
 	else {
-		[self.thumbnailView setHidden:NO];
+        self.shouldRemoveImage = NO;
         [self.thumbnailView setImage:[UIImage imageWithData:currentImageData]];
+		[self.thumbnailView setHidden:NO];
 		[self.canvasPlayer removeAllItems];
 	}
 }
@@ -70,6 +73,7 @@
 -(void)viewDidDisappear:(BOOL)animated {
 	[super viewDidDisappear:animated];
 	self.isVisible = NO;
+    [self.thumbnailView setHidden:YES];
 	[self.canvasPlayerLayer setHidden:YES];
 	[self.canvasPlayer pause];
 }

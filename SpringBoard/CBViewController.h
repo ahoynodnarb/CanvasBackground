@@ -9,13 +9,13 @@
 -(BOOL)isPlaying;
 @end
 @interface CBViewController : UIViewController
-@property (nonatomic, strong) NSString *currentTrack;
 @property (nonatomic, strong) AVQueuePlayer *canvasPlayer;
 @property (nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
 @property (nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
 @property (nonatomic, strong) UIImageView *thumbnailView;
 @property (nonatomic, assign) BOOL isVisible;
 @property (nonatomic, assign) BOOL shouldPlayCanvas;
+@property (nonatomic, assign) BOOL shouldRemoveImage;
 -(void)recreateCanvasPlayer:(NSNotification *)note;
 -(void)togglePlayer:(NSNotification *)note;
 @end

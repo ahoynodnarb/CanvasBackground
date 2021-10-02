@@ -6,8 +6,6 @@
 @end
 @interface SPTStatefulPlayerImplementation
 -(SPTPlayerTrack *)currentTrack;
--(SPTPlayerTrack *)nextTrack;
--(NSDictionary *)generateUserInfoWithTrack:(SPTPlayerTrack *)track;
 -(void)sendNotification;
 @end
 @interface SPTCanvasModelImplementation
