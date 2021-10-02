@@ -1,6 +1,5 @@
 #import <AVKit/AVKit.h>
 #import <Foundation/NSDistributedNotificationCenter.h>
-#import <MediaRemote/MediaRemote.h>
 #import <objc/runtime.h>
 
 @interface SBMediaController : NSObject

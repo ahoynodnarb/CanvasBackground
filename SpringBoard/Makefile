@@ -9,7 +9,6 @@ TWEAK_NAME = CanvasBackgroundSpringBoard
 
 CanvasBackgroundSpringBoard_FILES = Tweak.x CBViewController.m
 CanvasBackgroundSpringBoard_CFLAGS = -fobjc-arc
-CanvasBackgroundSpringBoard_PRIVATE_FRAMEWORKS += MediaRemote
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 include $(THEOS_MAKE_PATH)/aggregate.mk
