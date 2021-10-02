@@ -1,15 +1,17 @@
 #import "CBViewController.h"
 
 @implementation CBViewController
-// -(UIImage *)getArtworkImage {
-// 	UIImage *__block nowPlayingArtwork = [[UIImage alloc] init];
-// 	MRMediaRemoteGetNowPlayingInfo(dispatch_get_main_queue(), ^(CFDictionaryRef information) {
-//         NSDictionary* dict = (__bridge NSDictionary *)information;
-//         nowPlayingArtwork = [UIImage imageWithData:[dict objectForKey:(__bridge NSString*)kMRMediaRemoteNowPlayingInfoArtworkData]];
-// 		NSLog(@"canvasBackground image: %@", [UIImage imageWithData:[dict objectForKey:(__bridge NSString*)kMRMediaRemoteNowPlayingInfoArtworkData]]);
-//     });
-// 	return nowPlayingArtwork;
-// }
+-(UIImage *)getArtworkImage {
+    NSLog(@"canvasBackground %@", NSStringFromSelector(_cmd));
+	UIImage *__block nowPlayingArtwork = [[UIImage alloc] init];
+	MRMediaRemoteGetNowPlayingInfo(dispatch_get_main_queue(), ^(CFDictionaryRef information) {
+        NSDictionary* dict = (__bridge NSDictionary *)information;
+        nowPlayingArtwork = [UIImage imageWithData:[dict objectForKey:(__bridge NSString*)kMRMediaRemoteNowPlayingInfoArtworkData]];
+		NSLog(@"canvasBackground data: %@", [dict objectForKey:(__bridge NSString*)kMRMediaRemoteNowPlayingInfoArtworkData]);
+    });
+    NSLog(@"canvasBackground artwork: %@", nowPlayingArtwork);
+	return nowPlayingArtwork;
+}
 -(void)togglePlayer:(NSNotification *)note {
 	BOOL isPlaying = [[[note userInfo] objectForKey:@"isPlaying"] boolValue];
 	if(isPlaying) [self.canvasPlayer play];
@@ -17,10 +19,18 @@
 	self.shouldPlayCanvas = isPlaying;
 }
 -(void)recreateCanvasPlayer:(NSNotification *)note {
+    NSLog(@"canvasBackground recreating");
 	NSString *currentVideoURL = [[note userInfo] objectForKey:@"currentURL"];
-    if([currentVideoURL isEqualToString:self.currentTrack]) return;
-    self.currentTrack = currentVideoURL;
-	if(currentVideoURL) {
+    // if(!currentVideoURL) {
+    //     [self.bufferingView setHidden:NO];
+    //     [self.bufferingView setImage:[self getArtworkImage]];
+	// 	[self.canvasPlayer removeAllItems];
+    // }
+    // if([currentVideoURL isEqualToString:self.currentTrack]) return;
+    // self.currentTrack = currentVideoURL;
+    BOOL isDirectory = NO;
+	if([[NSFileManager defaultManager] fileExistsAtPath:[[NSURL URLWithString:currentVideoURL] path] isDirectory:&isDirectory] && !isDirectory) {
+        NSLog(@"canvasBackground URL: %@", currentVideoURL);
 		[self.bufferingView setHidden:NO];
 		AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
 		AVURLAsset *asset = [AVURLAsset URLAssetWithURL:[(AVURLAsset *)currentItem.asset URL] options:nil];
@@ -34,7 +44,9 @@
         });
 	}
 	else {
-		[self.bufferingView setHidden:YES];
+        NSLog(@"canvasBackground artwork: %@", [[note userInfo] objectForKey:@"artwork"]);
+		[self.bufferingView setHidden:NO];
+        [self.bufferingView setImage:[UIImage imageWithData:[[note userInfo] objectForKey:@"artwork"]]];
 		[self.canvasPlayer removeAllItems];
 	}
 }

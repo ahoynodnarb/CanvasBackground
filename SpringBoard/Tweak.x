@@ -1,16 +1,10 @@
 #import "SpringBoard.h"
 
-%hook SpringBoard
--(void)noteInterfaceOrientationChanged:(long long)arg1 duration:(double)arg2 logMessage:(id)arg3 {
-	%orig;
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"resizeCanvas" object:nil];
-}
-%end
-
-
 %hook SBMediaController
 -(void)_setNowPlayingApplication:(id)arg1 {
 	%orig;
+    // removes video from lockscreen when there's no now playing app
+    // if there is, it asks spotify to send the notification
 	if(!arg1) [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client"];
     else [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"sendNotification" object:@"com.spotify.client"];
 }
@@ -19,7 +13,6 @@
 %hook SBHomeScreenViewController
 -(void)loadView {
 	%orig;
-    NSLog(@"canvasBackground loaded in SBHomeScreenViewController");
 	homescreenController = [[CBViewController alloc] init];
 	if(!homescreenController.view) homescreenController.view = [[UIView alloc] initWithFrame:[[self view] bounds]];
     [[self view] insertSubview:[homescreenController view] atIndex:0];
@@ -38,7 +31,6 @@
 %hook CSFixedFooterViewController
 -(void)loadView {
     %orig;
-    NSLog(@"canvasBackground loaded in CSFixedFooterViewController");
     lockscreenController = [[CBViewController alloc] init];
 	if(!lockscreenController.view) lockscreenController.view = [[UIView alloc] initWithFrame:[[self view] bounds]];
     [[self view] addSubview:[lockscreenController view]];

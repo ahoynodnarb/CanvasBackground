@@ -7,28 +7,48 @@
 %end
 
 %hook SPTStatefulPlayerImplementation
-%property (nonatomic, strong) NSMutableDictionary *userInfo;
 %new
--(void)addCanvasToUserInfo:(SPTPlayerTrack *)track key:(NSString *)key {
+-(NSDictionary *)generateUserInfoWithTrack:(SPTPlayerTrack *)track {
     // handles finding the cached canvas
     // if it can't find it, it'll use a fallback url to download it
+    NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
 	NSURL *canvasModelURL = [contentLoader canvasViewControllerViewModelForTrack:track].canvasModel.contentURL;
 	NSURL *localURL = [assetLoader localURLForAssetURL:canvasModelURL];
 	NSString *fallbackURLString = canvasModelURL.absoluteString;
 	NSString *localURLString = localURL.absoluteString;
-	if(![[NSFileManager defaultManager] fileExistsAtPath:localURL.path] && fallbackURLString) {
-        [self.userInfo setObject:fallbackURLString forKey:key];
-    }
-	else if(localURLString) {
-        [self.userInfo setObject:localURLString forKey:key];
-    }
+	if(![[NSFileManager defaultManager] fileExistsAtPath:localURL.path] && fallbackURLString) [userInfo setObject:fallbackURLString forKey:@"currentURL"];
+	else if(localURLString) [userInfo setObject:localURLString forKey:@"currentURL"];
+    [imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork) {
+        NSLog(@"canvasBackground artwork block: %@", artwork);
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        NSString *filePath = [[paths objectAtIndex:0] stringByAppendingPathComponent:@"Image.png"];
+        [UIImagePNGRepresentation(artwork) writeToFile:filePath atomically:YES];
+        [userInfo setObject:UIImagePNGRepresentation(artwork) forKey:@"artwork"];
+    }];
+    return userInfo;
 }
 %new
 -(void)sendNotification {
-	self.userInfo = [[NSMutableDictionary alloc] init];
-	[self addCanvasToUserInfo:[self currentTrack] key:@"currentURL"];
-	[[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:self.userInfo];
-	[self.userInfo removeAllObjects];
+    // adds canvas to userInfo, then sends notification
+	// self.userInfo = [[NSMutableDictionary alloc] init];
+	// NSDictionary *userInfo = [self generateUserInfoWithTrack:[self currentTrack]];
+	// [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
+    SPTPlayerTrack *track = [self currentTrack];
+    NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
+	NSURL *canvasModelURL = [contentLoader canvasViewControllerViewModelForTrack:track].canvasModel.contentURL;
+	NSURL *localURL = [assetLoader localURLForAssetURL:canvasModelURL];
+	NSString *fallbackURLString = canvasModelURL.absoluteString;
+	NSString *localURLString = localURL.absoluteString;
+	if(![[NSFileManager defaultManager] fileExistsAtPath:localURL.path] && fallbackURLString) [userInfo setObject:fallbackURLString forKey:@"currentURL"];
+	else if(localURLString) [userInfo setObject:localURLString forKey:@"currentURL"];
+    [imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork) {
+        if(!artwork) return;
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        NSString *filePath = [[paths objectAtIndex:0] stringByAppendingPathComponent:@"Image.png"];
+        [UIImagePNGRepresentation(artwork) writeToFile:filePath atomically:YES];
+        [userInfo setObject:UIImagePNGRepresentation(artwork) forKey:@"artwork"];
+        [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
+    }];
 }
 -(SPTPlayerTrack *)nextTrack {
     [self sendNotification];
@@ -52,5 +72,10 @@
 %hook SPTCanvasNowPlayingContentLoader
 -(id)initWithCanvasTrackChecker:(id)arg1 viewModelFactory:(id)arg2 contentReloader:(id)arg3 contentLoaderTracker:(id)arg4 nowPlayingState:(id)arg5 {
 	return contentLoader = %orig;
+}
+%end
+%hook SPTGLUEImageLoader
+- (SPTGLUEImageLoader *)initWithImageLoader:(id)arg1 sourceIdentifier:(id)arg2 {
+    return imageLoader = %orig;
 }
 %end

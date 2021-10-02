@@ -1,5 +1,6 @@
 #import <AVKit/AVKit.h>
 #import <Foundation/NSDistributedNotificationCenter.h>
+#import <MediaRemote/MediaRemote.h>
 #import <objc/runtime.h>
 
 @interface SBMediaController : NSObject
@@ -15,6 +16,7 @@
 @property (nonatomic, strong) UIImageView *bufferingView;
 @property (nonatomic, assign) BOOL isVisible;
 @property (nonatomic, assign) BOOL shouldPlayCanvas;
+-(UIImage *)getArtworkImage;
 -(void)recreateCanvasPlayer:(NSNotification *)note;
 -(void)togglePlayer:(NSNotification *)note;
 @end
