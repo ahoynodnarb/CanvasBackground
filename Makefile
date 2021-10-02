@@ -1,5 +1,5 @@
 export ARCHS = arm64 arm64e
-export TARGET = iphone:clang:13.5:13.0
+export TARGET = iphone:clang:14.4
 export PREFIX = $(THEOS)/toolchain/Xcode.xctoolchain/usr/bin/
 
 SUBPROJECTS += Spotify SpringBoard
