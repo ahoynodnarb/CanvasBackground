@@ -17,6 +17,7 @@
 @property (nonatomic, assign) BOOL shouldRemoveImage;
 -(void)recreateCanvasPlayer:(NSNotification *)note;
 -(void)togglePlayer:(NSNotification *)note;
+// -(UIImage *)getArtworkImage;
 @end
 @interface CALayer ()
 -(void)setSecurityMode:(NSString *)arg1;

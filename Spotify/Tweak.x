@@ -18,15 +18,10 @@
 	NSString *localURLString = localURL.absoluteString;
 	if(![[NSFileManager defaultManager] fileExistsAtPath:localURL.path] && fallbackURLString) [userInfo setObject:fallbackURLString forKey:@"currentURL"];
 	else if(localURLString) [userInfo setObject:localURLString forKey:@"currentURL"];
-    NSLog(@"canvasBackground starting time: %@", [NSDate now]);
     [imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork) {
         if(!artwork) return;
-        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-        NSString *filePath = [[paths objectAtIndex:0] stringByAppendingPathComponent:@"Image.png"];
-        [UIImagePNGRepresentation(artwork) writeToFile:filePath atomically:YES];
         [userInfo setObject:UIImagePNGRepresentation(artwork) forKey:@"artwork"];
         [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
-        NSLog(@"canvasBackground finished time: %@", [NSDate now]);
     }];
 }
 - (void)playerQueue:(id)arg1 didMoveToRelativeTrack:(id)arg2 {

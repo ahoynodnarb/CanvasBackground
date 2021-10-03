@@ -1,6 +1,19 @@
 #import "CBViewController.h"
 
 @implementation CBViewController
+// -(UIImage *)getArtworkImage {
+//     NSBundle *mediaRemoteBundle = [NSBundle bundleWithPath:@"/System/Library/PrivateFrameworks/MediaRemote.framework"];
+//     [mediaRemoteBundle load];
+//     UIImage *__block currentArtwork = nil;
+//     MRMediaRemoteGetNowPlayingInfo(dispatch_get_main_queue(), ^(CFDictionaryRef information) {
+// 		if (information) {
+// 			NSDictionary* dictionary = (__bridge NSDictionary *)information;
+// 			currentArtwork = [UIImage imageWithData:[dictionary objectForKey:(__bridge NSString*)kMRMediaRemoteNowPlayingInfoArtworkData]];
+//             NSLog(@"canvasBackground currentArtwork: %@", currentArtwork);
+//         }
+//     });
+//     return currentArtwork;
+// }
 -(void)togglePlayer:(NSNotification *)note {
 	BOOL isPlaying = [[[note userInfo] objectForKey:@"isPlaying"] boolValue];
 	if(isPlaying) [self.canvasPlayer play];
@@ -8,7 +21,8 @@
 	self.shouldPlayCanvas = isPlaying;
 }
 -(void)recreateCanvasPlayer:(NSNotification *)note {
-	NSString *currentVideoURL = [[note userInfo] objectForKey:@"currentURL"];
+    NSDictionary *userInfo = [note userInfo];
+	NSString *currentVideoURL = [userInfo objectForKey:@"currentURL"];
     BOOL isDirectory = NO;
 	if([[NSFileManager defaultManager] fileExistsAtPath:[[NSURL URLWithString:currentVideoURL] path] isDirectory:&isDirectory] && !isDirectory) {
 		[self.thumbnailView setHidden:NO];
@@ -27,7 +41,7 @@
 	}
 	else {
         self.shouldRemoveImage = NO;
-        NSData *currentImageData = [[note userInfo] objectForKey:@"artwork"];
+        NSData *currentImageData = [userInfo objectForKey:@"artwork"];
         [self.thumbnailView setImage:[UIImage imageWithData:currentImageData]];
 		[self.thumbnailView setHidden:NO];
 		[self.canvasPlayer removeAllItems];
@@ -38,8 +52,8 @@
 	self.thumbnailView = [[UIImageView alloc] initWithFrame:[[self view] frame]];
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
-    // [self.view setClipsToBounds:YES];
-    [self.view setContentMode:0];
+    [self.view setClipsToBounds:YES];
+    [self.view setContentMode:UIViewContentModeScaleAspectFill];
 	[self.thumbnailView setContentMode:UIViewContentModeScaleAspectFill];
 	[self.thumbnailView setHidden:YES];
 	[self.canvasPlayer setVolume:0];
