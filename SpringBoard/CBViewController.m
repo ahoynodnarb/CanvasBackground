@@ -23,8 +23,9 @@
 -(void)recreateCanvasPlayer:(NSNotification *)note {
     NSDictionary *userInfo = [note userInfo];
 	NSString *currentVideoURL = [userInfo objectForKey:@"currentURL"];
-    BOOL isDirectory = NO;
-	if([[NSFileManager defaultManager] fileExistsAtPath:[[NSURL URLWithString:currentVideoURL] path] isDirectory:&isDirectory] && !isDirectory) {
+    // BOOL isDirectory = NO;
+	// if([[NSFileManager defaultManager] fileExistsAtPath:[[NSURL URLWithString:currentVideoURL] path] isDirectory:&isDirectory] && !isDirectory) {
+    if(currentVideoURL) {
 		[self.thumbnailView setHidden:NO];
 		AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:currentVideoURL]];
 		AVURLAsset *asset = [AVURLAsset URLAssetWithURL:[(AVURLAsset *)currentItem.asset URL] options:nil];

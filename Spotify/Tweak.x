@@ -10,19 +10,30 @@
 %new
 -(void)sendNotification {
     // adds canvas to userInfo, then sends notification
+    NSLog(@"canvasBackground %@", NSStringFromSelector(_cmd));
     SPTPlayerTrack *track = [self currentTrack];
     NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
 	NSURL *canvasModelURL = [contentLoader canvasViewControllerViewModelForTrack:track].canvasModel.contentURL;
 	NSURL *localURL = [assetLoader localURLForAssetURL:canvasModelURL];
 	NSString *fallbackURLString = canvasModelURL.absoluteString;
 	NSString *localURLString = localURL.absoluteString;
-	if(![[NSFileManager defaultManager] fileExistsAtPath:localURL.path] && fallbackURLString) [userInfo setObject:fallbackURLString forKey:@"currentURL"];
-	else if(localURLString) [userInfo setObject:localURLString forKey:@"currentURL"];
-    [imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork) {
-        if(!artwork) return;
-        [userInfo setObject:UIImagePNGRepresentation(artwork) forKey:@"artwork"];
+    NSNumber *isDirectory;
+    BOOL success = [localURL getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:nil];
+	if(![[NSFileManager defaultManager] fileExistsAtPath:localURL.path] && fallbackURLString) {
+        [userInfo setObject:fallbackURLString forKey:@"currentURL"];
         [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
-    }];
+    }
+	else if(!success || ![isDirectory boolValue]) {
+        [userInfo setObject:localURLString forKey:@"currentURL"];
+        [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
+    }
+    else {
+        [imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(600, 600) completion:^(UIImage *artwork) {
+            if(!artwork) return;
+            [userInfo setObject:UIImagePNGRepresentation(artwork) forKey:@"artwork"];
+            [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
+        }];
+    }
 }
 - (void)playerQueue:(id)arg1 didMoveToRelativeTrack:(id)arg2 {
     [self sendNotification];
