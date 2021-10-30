@@ -14,10 +14,8 @@
 @property (nonatomic, strong) UIImageView *thumbnailView;
 @property (nonatomic, assign) BOOL isVisible;
 @property (nonatomic, assign) BOOL shouldPlayCanvas;
-@property (nonatomic, assign) BOOL shouldRemoveImage;
 -(void)recreateCanvasPlayer:(NSNotification *)note;
 -(void)togglePlayer:(NSNotification *)note;
-// -(UIImage *)getArtworkImage;
 @end
 @interface CALayer ()
 -(void)setSecurityMode:(NSString *)arg1;
