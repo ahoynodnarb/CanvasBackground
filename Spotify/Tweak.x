@@ -9,18 +9,21 @@
 %hook SPTStatefulPlayerImplementation
 %new
 - (void)sendNotification {
-    // adds canvas to userInfo, then sends notification
     SPTPlayerTrack *track = [self currentTrack];
     NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
 	NSURL *fallbackURL = [contentLoader canvasViewControllerViewModelForTrack:track].canvasModel.contentURL;
 	NSURL *localURL = [assetLoader localURLForAssetURL:fallbackURL];
-    if(![localURL.absoluteString hasSuffix:@"com.spotify.service.network/"]) {
+    /*
+      sometimes the localurl gives us the folder, so we check if it's a file or folder. 
+      If the canvas hasn't been cached before it still gives us a technically valid file 
+      but it doesn't exist yet. in the event that both flags are false, we use a fallback url 
+      which downloads the canvas from an outside source, and if all are false the song must not have a canvas
+    */
+    if(![localURL.absoluteString hasSuffix:@"com.spotify.service.network/"] && [[NSFileManager defaultManager] fileExistsAtPath:localURL.absoluteString]) {
         [userInfo setObject:localURL.absoluteString forKey:@"currentURL"];
-        // [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
     }
     else if(fallbackURL) {
         [userInfo setObject:fallbackURL.absoluteString forKey:@"currentURL"];
-        // [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
     }
     else {
         [imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(600, 600) completion:^(UIImage *artwork) {
