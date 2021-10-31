@@ -10,7 +10,7 @@
 - (void)resizePlayer;
 @end
 
-@implementation CBViewControllers
+@implementation CBViewController
 - (void)togglePlayer:(NSNotification *)note {
 	BOOL isPlaying = [[[note userInfo] objectForKey:@"isPlaying"] boolValue];
 	if(isPlaying) [self.canvasPlayer play];
