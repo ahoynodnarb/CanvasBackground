@@ -9,12 +9,13 @@
     else [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"sendNotification" object:@"com.spotify.client"];
 }
 %end
+
 %hook SBHomeScreenViewController
 - (void)loadView {
 	%orig;
     [self.view setClipsToBounds:YES];
 	homescreenController = [[CBViewController alloc] init];
-	if(!homescreenController.view) homescreenController.view = [[UIView alloc] initWithFrame:[[self view] bounds]];
+	if(!homescreenController.view) homescreenController.view = [[UIView alloc] initWithFrame:self.view.bounds];
     [[self view] insertSubview:[homescreenController view] atIndex:0];
 }
 %end
@@ -24,8 +25,8 @@
     %orig;
     [self.view setClipsToBounds:YES];
     lockscreenController = [[CBViewController alloc] init];
-	if(!lockscreenController.view) lockscreenController.view = [[UIView alloc] initWithFrame:[[self view] bounds]];
-    [[self view] addSubview:[lockscreenController view]];
-    [[self view] bringSubviewToFront:[lockscreenController view]];
+	if(!lockscreenController.view) lockscreenController.view = [[UIView alloc] initWithFrame:self.view.bounds];
+    [self.view addSubview:lockscreenController.view];
+    [self.view bringSubviewToFront:lockscreenController.view];
 }
 %end

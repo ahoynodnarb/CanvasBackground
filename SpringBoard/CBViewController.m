@@ -1,18 +1,8 @@
 #import "CBViewController.h"
 
-@interface CBViewController (private)
-@property (nonatomic, strong) AVQueuePlayer *canvasPlayer;
-@property (nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
-@property (nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
-@property (nonatomic, strong) UIImageView *thumbnailView;
-- (void)recreateCanvasPlayer:(NSNotification *)note;
-- (void)togglePlayer:(NSNotification *)note;
-- (void)resizePlayer;
-@end
-
 @implementation CBViewController
 - (void)togglePlayer:(NSNotification *)note {
-	BOOL isPlaying = [[[note userInfo] objectForKey:@"isPlaying"] boolValue];
+	BOOL isPlaying = [[note.userInfo objectForKey:@"isPlaying"] boolValue];
 	if(isPlaying) [self.canvasPlayer play];
 	else [self.canvasPlayer pause];
 }
@@ -22,11 +12,10 @@
   containing the thumbnail and canvas URL
 */
 - (void)recreateCanvasPlayer:(NSNotification *)note {
-    NSDictionary *userInfo = [note userInfo];
+    NSDictionary *userInfo = note.userInfo;
 	NSURL *currentVideoURL = [NSURL URLWithString:[userInfo objectForKey:@"currentURL"]];
     [self.thumbnailView setHidden:NO];
     if(currentVideoURL) {
-        [self.canvasPlayerLayer setOpacity:1];
         AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:(NSURL *) currentVideoURL];
         AVURLAsset *asset = [AVURLAsset URLAssetWithURL:[(AVURLAsset *)currentItem.asset URL] options:nil];
         AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
@@ -37,7 +26,9 @@
 	}
 	else {
         NSData *currentImageData = [userInfo objectForKey:@"artwork"];
-        [self.thumbnailView setImage:[UIImage imageWithData:currentImageData]];
+        UIImage *image = [UIImage imageWithData:currentImageData];
+        image = [UIImage imageWithCGImage:[image CGImage] scale:2.0f orientation:UIImageOrientationUp];
+        [self.thumbnailView setImage:image];
 		[self.canvasPlayer removeAllItems];
 	}
 }
@@ -45,25 +36,12 @@
   We need to do this to prevent thumbnailView
   from appearing under the canvas, wasting power
 */
-- (void)observeValueForKeyPath:(NSString*)path ofObject:(id)object change:(NSDictionary*)change context:(void*) context {
-    if([self.canvasPlayerLayer isReadyForDisplay]) {
-        [self.thumbnailView setHidden:YES];
-    }
-}
-/*
-  Called whenever screen changes rotation
-  we need to do this since ios doesn't
-  automatically resize UIViews
-*/
-- (void)resizePlayer {
-    [super viewDidLayoutSubviews];
-    [self.view setFrame:self.view.superview.bounds];
-    [self.thumbnailView setFrame:self.view.superview.bounds];
-    [self.canvasPlayerLayer setFrame:[[self view] bounds]];
+- (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *) context {
+    if(self.canvasPlayerLayer.readyForDisplay) [self.thumbnailView setHidden:YES];
 }
 - (void)viewDidLoad {
 	[super viewDidLoad];
-	self.thumbnailView = [[UIImageView alloc] initWithFrame:[[self view] frame]];
+	self.thumbnailView = [[UIImageView alloc] initWithFrame:self.view.frame];
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
     [self.view setClipsToBounds:YES];
@@ -76,15 +54,24 @@
 	[self.canvasPlayerLayer setFrame:[[self view] bounds]];
 	[self.canvasPlayerLayer setHidden:YES];
     [self.canvasPlayerLayer addObserver:self forKeyPath:@"readyForDisplay" options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew context:NULL];
-	[[[self view] layer] insertSublayer:self.canvasPlayerLayer atIndex:0];
-	[[[self view] layer] setSecurityMode:@"secure"];
-	[[self view] insertSubview:self.thumbnailView atIndex:0];
+	[self.view.layer insertSublayer:self.canvasPlayerLayer atIndex:0];
+	[self.view.layer setSecurityMode:@"secure"];
+	[self.view insertSubview:self.thumbnailView atIndex:0];
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resizePlayer) name:UIDeviceOrientationDidChangeNotification object:[UIDevice currentDevice]];
 	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(recreateCanvasPlayer:) name:@"recreateCanvas" object:@"com.spotify.client"];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(togglePlayer:) name:@"togglePlayer" object:@"com.spotify.client"];
+}
+/*
+  Called whenever screen changes rotation
+  we need to do this since ios doesn't
+  automatically resize UIViews
+*/
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    [self.view setFrame:self.view.superview.bounds];
+    [self.thumbnailView setFrame:self.view.superview.bounds];
+    [self.canvasPlayerLayer setFrame:[[self view] bounds]];
 }
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];

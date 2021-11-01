@@ -4,7 +4,7 @@
 @property(readonly, nonatomic) NSURL *imageURL;
 @end
 @interface SPTStatefulPlayerImplementation
-- (SPTPlayerTrack *)currentTrack;
+@property (nonatomic, strong) SPTPlayerTrack *currentTrack;
 - (void)sendNotification;
 @end
 @interface SPTCanvasModelImplementation
