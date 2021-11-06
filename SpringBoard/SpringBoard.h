@@ -1,5 +1,8 @@
 #import "CBViewController.h"
 
+@interface SBApplication
+@property (nonatomic, strong) NSString *bundleIdentifier;
+@end
 @interface SBHomeScreenViewController : UIViewController
 @end
 @interface CSFixedFooterViewController : UIViewController
