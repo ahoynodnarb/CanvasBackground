@@ -1,22 +1,20 @@
 #import <Foundation/NSDistributedNotificationCenter.h>
 
-@interface SPTPlayerTrack
-@property(readonly, nonatomic) NSURL *imageURL;
+@interface SPTPlayerTrack : NSObject
+@property (copy, nonatomic) NSDictionary *metadata;
+@property (readonly, nonatomic) NSURL *imageURL;
 @end
 @interface SPTStatefulPlayerImplementation
+@property (nonatomic, assign) BOOL isPaused;
+@property (nonatomic, strong) SPTPlayerTrack *currentTrack;
+@end
+@interface SPTNowPlayingModel
+@property (nonatomic, strong) SPTPlayerTrack *previousTrack;
 @property (nonatomic, strong) SPTPlayerTrack *currentTrack;
 - (void)sendNotification;
 @end
-@interface SPTCanvasModelImplementation
-@property (readonly, copy, nonatomic) NSURL *contentURL;
-@end
-@interface SPTCanvasContentLayerViewControllerViewModel
-@property (readonly, nonatomic) SPTCanvasModelImplementation *canvasModel;
-@end
-@interface SPTCanvasNowPlayingContentLoader
-- (SPTCanvasContentLayerViewControllerViewModel *)canvasViewControllerViewModelForTrack:(id)arg1;
-@end
 @interface SPTVideoURLAssetLoaderImplementation
+- (BOOL)hasLocalAssetForURL:(NSURL *)arg1;
 - (NSURL *)localURLForAssetURL:(NSURL *)arg1;
 @end
 @interface SPTGLUEImageLoader
@@ -25,4 +23,3 @@
 
 SPTGLUEImageLoader *imageLoader;
 SPTVideoURLAssetLoaderImplementation *assetLoader;
-SPTCanvasNowPlayingContentLoader *contentLoader;

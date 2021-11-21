@@ -16,7 +16,7 @@
 	NSURL *currentVideoURL = [NSURL URLWithString:[userInfo objectForKey:@"currentURL"]];
     [self.thumbnailView setHidden:NO];
     if(currentVideoURL) {
-        AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:(NSURL *) currentVideoURL];
+        AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:(NSURL *)currentVideoURL];
         AVURLAsset *asset = [AVURLAsset URLAssetWithURL:[(AVURLAsset *)currentItem.asset URL] options:nil];
         AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
         UIImage *firstFrame = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
@@ -36,8 +36,11 @@
   We need to do this to prevent thumbnailView
   from appearing under the canvas, wasting power
 */
-- (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *) context {
-    if(self.canvasPlayerLayer.readyForDisplay) [self.thumbnailView setHidden:YES];
+- (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    if(self.canvasPlayerLayer.readyForDisplay) {
+        [self.thumbnailView setImage:nil];
+        [self.thumbnailView setHidden:YES];
+    }
 }
 - (void)viewDidLoad {
 	[super viewDidLoad];
@@ -51,7 +54,7 @@
 	[self.canvasPlayer setVolume:0];
 	[self.canvasPlayer setPreventsDisplaySleepDuringVideoPlayback:NO];
 	[self.canvasPlayerLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
-	[self.canvasPlayerLayer setFrame:[[self view] bounds]];
+	[self.canvasPlayerLayer setFrame:self.view.bounds];
 	[self.canvasPlayerLayer setHidden:YES];
     [self.canvasPlayerLayer addObserver:self forKeyPath:@"readyForDisplay" options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew context:NULL];
 	[self.view.layer insertSublayer:self.canvasPlayerLayer atIndex:0];
@@ -71,7 +74,7 @@
     [super viewDidLayoutSubviews];
     [self.view setFrame:self.view.superview.bounds];
     [self.thumbnailView setFrame:self.view.superview.bounds];
-    [self.canvasPlayerLayer setFrame:[[self view] bounds]];
+    [self.canvasPlayerLayer setFrame:self.view.bounds];
 }
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
