@@ -1,6 +1,13 @@
 #import "CBViewController.h"
 
 @implementation CBViewController
+static NSCache *_playerCache = nil;
++ (void)setPlayerCache:(NSCache *)cache {
+    _playerCache = cache;
+}
++ (NSCache *)playerCache {
+    return _playerCache;
+}
 - (void)togglePlayer:(NSNotification *)note {
 	BOOL isPlaying = [[note.userInfo objectForKey:@"isPlaying"] boolValue];
 	if(isPlaying) [self.canvasPlayer play];
@@ -14,15 +21,31 @@
 - (void)recreateCanvasPlayer:(NSNotification *)note {
     NSDictionary *userInfo = note.userInfo;
 	NSURL *currentVideoURL = [NSURL URLWithString:[userInfo objectForKey:@"currentURL"]];
+    NSURL *previousTrackURL = [(AVURLAsset *)self.canvasPlayer.currentItem.asset URL];
     [self.thumbnailView setHidden:NO];
     if(currentVideoURL) {
-        AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:(NSURL *)currentVideoURL];
-        AVURLAsset *asset = [AVURLAsset URLAssetWithURL:[(AVURLAsset *)currentItem.asset URL] options:nil];
-        AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
-        UIImage *firstFrame = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
-        [self.thumbnailView setImage:firstFrame];
-        [self.canvasPlayer play];
-        self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:currentItem];
+        if(![currentVideoURL isEqual:previousTrackURL]) {
+            [self.canvasPlayer removeAllItems];
+            NSString *currentVideoKey = currentVideoURL.absoluteString;
+            NSString *currentThumbnailKey = [currentVideoKey stringByAppendingString:@"thumbnail"];
+            AVPlayerItem *currentItem;
+            UIImage *firstFrame;
+            if(![CBViewController.playerCache objectForKey:currentVideoKey]) {
+                currentItem = [AVPlayerItem playerItemWithURL:currentVideoURL];
+                [CBViewController.playerCache setObject:currentItem forKey:currentVideoKey];
+            }
+            else currentItem = [CBViewController.playerCache objectForKey:currentVideoKey];
+            if(![CBViewController.playerCache objectForKey:currentThumbnailKey]) {
+                AVURLAsset *asset = [AVURLAsset URLAssetWithURL:currentVideoURL options:nil];
+                AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+                firstFrame = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
+                [CBViewController.playerCache setObject:firstFrame forKey:currentThumbnailKey];
+            }
+            else firstFrame = [CBViewController.playerCache objectForKey:currentThumbnailKey];
+            [self.thumbnailView setImage:firstFrame];
+            [self.canvasPlayer play];
+            self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:currentItem];
+        }
 	}
 	else {
         NSData *currentImageData = [userInfo objectForKey:@"artwork"];
@@ -44,6 +67,7 @@
 }
 - (void)viewDidLoad {
 	[super viewDidLoad];
+    if(!CBViewController.playerCache) CBViewController.playerCache = [[NSCache alloc] init];
 	self.thumbnailView = [[UIImageView alloc] initWithFrame:self.view.frame];
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];

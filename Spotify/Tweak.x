@@ -9,10 +9,11 @@
     NSURL *fallbackURL = [NSURL URLWithString:track.metadata[@"canvas.url"]];
 	NSURL *localURL = [assetLoader localURLForAssetURL:fallbackURL];
     /*
-      sometimes the localURL gives us the folder, so we check if it's a file or folder. 
+      Sometimes the localURL gives us the folder, so we check if it's a file or folder. 
       If the canvas hasn't been cached before it still gives us a technically valid file 
-      but it doesn't exist yet. in the event that both flags are false, we use a fallback url 
-      which downloads the canvas from an outside source, and if all are false the song must not have a canvas
+      but it doesn't exist yet. If localURL is a folder or there is no local asset, then
+      download the URL to a cached file. If there's no fallback then the track must not
+      have a canvas to play.
     */
     if(fallbackURL) {
         if(localURL.hasDirectoryPath || ![assetLoader hasLocalAssetForURL:fallbackURL]) {
@@ -30,7 +31,7 @@
         }];
     }
 }
-- (void)playerDidReceiveStateUpdate:(SPTStatefulPlayerImplementation *)arg1 {
+- (void)playerDidUpdateTrackPosition:(SPTStatefulPlayerImplementation *)arg1 {
 	%orig;
     if(![self.previousTrack isEqual:arg1.currentTrack]) {
         self.previousTrack = arg1.currentTrack;
@@ -48,12 +49,14 @@
 }
 %end
 
+// Ensures canvas will be available for all devices
 %hook SPTCanvasCompatibilityManager
 + (BOOL)shouldEnableCanvasForDevice {
 	return YES;
 }
 %end
 
+// Makes sure that canvas will disappear once app closes
 %hook _TtC15ContainerWiring18SpotifyAppDelegate
 - (void)applicationWillTerminate:(id)arg1 {
     %orig;
@@ -61,6 +64,7 @@
 }
 %end
 
+// Updates on-the-fly for when the user disables the canvas
 %hook SPTCanvasSettingsSection
 - (void)settingChanged:(id)arg1 {
     %orig;
