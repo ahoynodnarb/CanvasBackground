@@ -64,14 +64,6 @@
 }
 %end
 
-// Updates on-the-fly for when the user disables the canvas
-%hook SPTCanvasSettingsSection
-- (void)settingChanged:(id)arg1 {
-    %orig;
-    [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"sendNotification" object:@"com.spotify.client"];
-}
-%end
-
 %hook SPTVideoURLAssetLoaderImplementation
 - (SPTVideoURLAssetLoaderImplementation *)initWithNetworkConnectivityController:(id)arg1 requestAccountant:(id)arg2 serviceIdentifier:(id)arg3 HTTPMaximumConnectionsPerHost:(long long)arg4 timeoutIntervalForRequest:(double)arg5 timeoutIntervalForResource:(double)arg6 {
 	return assetLoader = %orig;

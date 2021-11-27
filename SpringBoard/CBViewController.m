@@ -22,9 +22,9 @@ static NSCache *_playerCache = nil;
     NSDictionary *userInfo = note.userInfo;
 	NSURL *currentVideoURL = [NSURL URLWithString:[userInfo objectForKey:@"currentURL"]];
     NSURL *previousTrackURL = [(AVURLAsset *)self.canvasPlayer.currentItem.asset URL];
-    [self.thumbnailView setHidden:NO];
     if(currentVideoURL) {
         if(![currentVideoURL isEqual:previousTrackURL]) {
+            [self.thumbnailView setHidden:NO];
             [self.canvasPlayer removeAllItems];
             NSString *currentVideoKey = currentVideoURL.absoluteString;
             NSString *currentThumbnailKey = [currentVideoKey stringByAppendingString:@"thumbnail"];
@@ -48,6 +48,7 @@ static NSCache *_playerCache = nil;
         }
 	}
 	else {
+        [self.thumbnailView setHidden:NO];
         NSData *currentImageData = [userInfo objectForKey:@"artwork"];
         UIImage *image = [UIImage imageWithData:currentImageData];
         image = [UIImage imageWithCGImage:[image CGImage] scale:2.0f orientation:UIImageOrientationUp];
@@ -60,7 +61,7 @@ static NSCache *_playerCache = nil;
   from appearing under the canvas, wasting power
 */
 - (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    if(self.canvasPlayerLayer.readyForDisplay) {
+    if(self.canvasPlayer.timeControlStatus == AVPlayerTimeControlStatusPlaying) {
         [self.thumbnailView setImage:nil];
         [self.thumbnailView setHidden:YES];
     }
@@ -71,19 +72,19 @@ static NSCache *_playerCache = nil;
 	self.thumbnailView = [[UIImageView alloc] initWithFrame:self.view.frame];
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
-    [self.view setClipsToBounds:YES];
-    [self.view setContentMode:UIViewContentModeScaleAspectFill];
 	[self.thumbnailView setContentMode:UIViewContentModeScaleAspectFill];
 	[self.thumbnailView setHidden:YES];
 	[self.canvasPlayer setVolume:0];
 	[self.canvasPlayer setPreventsDisplaySleepDuringVideoPlayback:NO];
+    [self.canvasPlayer addObserver:self forKeyPath:@"timeControlStatus" options:NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew context:NULL];
 	[self.canvasPlayerLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
 	[self.canvasPlayerLayer setFrame:self.view.bounds];
 	[self.canvasPlayerLayer setHidden:YES];
-    [self.canvasPlayerLayer addObserver:self forKeyPath:@"readyForDisplay" options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew context:NULL];
 	[self.view.layer insertSublayer:self.canvasPlayerLayer atIndex:0];
 	[self.view.layer setSecurityMode:@"secure"];
 	[self.view insertSubview:self.thumbnailView atIndex:0];
+    [self.view setClipsToBounds:YES];
+    [self.view setContentMode:UIViewContentModeScaleAspectFill];
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(recreateCanvasPlayer:) name:@"recreateCanvas" object:@"com.spotify.client"];
