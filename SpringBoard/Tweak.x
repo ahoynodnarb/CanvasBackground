@@ -16,7 +16,7 @@
     [self.view setClipsToBounds:YES];
 	homescreenController = [[CBViewController alloc] init];
 	if(!homescreenController.view) homescreenController.view = [[UIView alloc] initWithFrame:self.view.bounds];
-    [[self view] insertSubview:[homescreenController view] atIndex:0];
+    [self.view insertSubview:homescreenController.view atIndex:0];
 }
 %end
 

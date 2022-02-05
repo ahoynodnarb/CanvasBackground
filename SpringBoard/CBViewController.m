@@ -20,13 +20,13 @@ static NSCache *_playerCache = nil;
 */
 - (void)recreateCanvasPlayer:(NSNotification *)note {
     NSDictionary *userInfo = note.userInfo;
-	NSURL *currentVideoURL = [NSURL URLWithString:[userInfo objectForKey:@"currentURL"]];
+    NSURL *currentVideoURL = [NSURL URLWithString:[userInfo objectForKey:@"currentURL"]];
     NSURL *previousTrackURL = [(AVURLAsset *)self.canvasPlayer.currentItem.asset URL];
     if(currentVideoURL) {
         if(![currentVideoURL isEqual:previousTrackURL]) {
             [self.thumbnailView setHidden:NO];
             [self.canvasPlayer removeAllItems];
-            NSString *currentVideoKey = currentVideoURL.absoluteString;
+            NSString *currentVideoKey = [currentVideoURL lastPathComponent];
             NSString *currentThumbnailKey = [currentVideoKey stringByAppendingString:@"thumbnail"];
             AVPlayerItem *currentItem;
             UIImage *firstFrame;
@@ -39,6 +39,7 @@ static NSCache *_playerCache = nil;
                 AVURLAsset *asset = [AVURLAsset URLAssetWithURL:currentVideoURL options:nil];
                 AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
                 firstFrame = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
+                NSLog(@"canvasBackground firstFrame: %@ %@ %@", asset, imageGenerator, firstFrame);
                 [CBViewController.playerCache setObject:firstFrame forKey:currentThumbnailKey];
             }
             else firstFrame = [CBViewController.playerCache objectForKey:currentThumbnailKey];

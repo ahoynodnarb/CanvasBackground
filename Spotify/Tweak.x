@@ -7,7 +7,10 @@
     SPTPlayerTrack *track = self.currentTrack;
     NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
     NSURL *fallbackURL = [NSURL URLWithString:track.metadata[@"canvas.url"]];
-	NSURL *localURL = [assetLoader localURLForAssetURL:fallbackURL];
+    NSString *libraryPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSString *fileName = [[[fallbackURL path] stringByReplacingOccurrencesOfString:@"/" withString:@"-"] substringFromIndex:1];
+    NSString *filePath = [NSString stringWithFormat:@"%@/Caches/Canvases/%@",libraryPath,fileName];
+    NSURL *localURL = [[NSFileManager defaultManager] fileExistsAtPath:filePath] ? [NSURL fileURLWithPath:filePath] : nil;
     /*
       Sometimes the localURL gives us the folder, so we check if it's a file or folder. 
       If the canvas hasn't been cached before it still gives us a technically valid file 
@@ -16,10 +19,16 @@
       have a canvas to play.
     */
     if(fallbackURL) {
-        if(localURL.hasDirectoryPath || ![assetLoader hasLocalAssetForURL:fallbackURL]) {
+        if(!localURL) {
+            [userInfo setObject:fallbackURL.absoluteString forKey:@"currentURL"];
+            [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
+            return;
+        }
+        else if(![[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
             // I have no idea why, but this is faster than downloading it later
+            NSLog(@"canvasBackground creating artificially");
             NSData *URLData = [NSData dataWithContentsOfURL:fallbackURL];
-            if(URLData) [URLData writeToFile:localURL.path atomically:YES];
+            if(URLData) [URLData writeToFile:filePath atomically:YES];
         }
         [userInfo setObject:localURL.absoluteString forKey:@"currentURL"];
         [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
