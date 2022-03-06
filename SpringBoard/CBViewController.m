@@ -30,22 +30,22 @@ static NSCache *_playerCache = nil;
             NSString *currentThumbnailKey = [currentVideoKey stringByAppendingString:@"thumbnail"];
             AVPlayerItem *currentItem;
             UIImage *firstFrame;
+            if(![CBViewController.playerCache objectForKey:currentThumbnailKey]) {
+                AVURLAsset *asset = [AVURLAsset URLAssetWithURL:currentVideoURL options:nil];
+                AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+                firstFrame = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
+                [CBViewController.playerCache setObject:firstFrame forKey:currentThumbnailKey];
+            }
+            else firstFrame = [CBViewController.playerCache objectForKey:currentThumbnailKey];
+            [self.thumbnailView setImage:firstFrame];
             if(![CBViewController.playerCache objectForKey:currentVideoKey]) {
                 currentItem = [AVPlayerItem playerItemWithURL:currentVideoURL];
                 [CBViewController.playerCache setObject:currentItem forKey:currentVideoKey];
             }
             else currentItem = [CBViewController.playerCache objectForKey:currentVideoKey];
-            if(![CBViewController.playerCache objectForKey:currentThumbnailKey]) {
-                AVURLAsset *asset = [AVURLAsset URLAssetWithURL:currentVideoURL options:nil];
-                AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
-                firstFrame = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
-                NSLog(@"canvasBackground firstFrame: %@ %@ %@", asset, imageGenerator, firstFrame);
-                [CBViewController.playerCache setObject:firstFrame forKey:currentThumbnailKey];
-            }
-            else firstFrame = [CBViewController.playerCache objectForKey:currentThumbnailKey];
-            [self.thumbnailView setImage:firstFrame];
             [self.canvasPlayer play];
             self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:currentItem];
+            [self.canvasPlayer.currentItem addObserver:self forKeyPath:@"status" options:0 context:NULL];
         }
 	}
 	else {
@@ -62,10 +62,8 @@ static NSCache *_playerCache = nil;
   from appearing under the canvas, wasting power
 */
 - (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    if(self.canvasPlayer.timeControlStatus == AVPlayerTimeControlStatusPlaying) {
-        [self.thumbnailView setImage:nil];
+    if(self.canvasPlayer.currentItem.status == AVPlayerStatusReadyToPlay)
         [self.thumbnailView setHidden:YES];
-    }
 }
 - (void)viewDidLoad {
 	[super viewDidLoad];
@@ -77,7 +75,6 @@ static NSCache *_playerCache = nil;
 	[self.thumbnailView setHidden:YES];
 	[self.canvasPlayer setVolume:0];
 	[self.canvasPlayer setPreventsDisplaySleepDuringVideoPlayback:NO];
-    [self.canvasPlayer addObserver:self forKeyPath:@"timeControlStatus" options:NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew context:NULL];
 	[self.canvasPlayerLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
 	[self.canvasPlayerLayer setFrame:self.view.bounds];
 	[self.canvasPlayerLayer setHidden:YES];

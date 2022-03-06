@@ -13,13 +13,8 @@
 @property (nonatomic, strong) SPTPlayerTrack *currentTrack;
 - (void)sendNotification;
 @end
-@interface SPTVideoURLAssetLoaderImplementation
-- (BOOL)hasLocalAssetForURL:(NSURL *)arg1;
-- (NSURL *)localURLForAssetURL:(NSURL *)arg1;
-@end
 @interface SPTGLUEImageLoader
 - (void)loadImageForURL:(NSURL *)url imageSize:(CGSize)size completion:(id)completion;
 @end
 
 SPTGLUEImageLoader *imageLoader;
-SPTVideoURLAssetLoaderImplementation *assetLoader;

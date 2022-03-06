@@ -26,7 +26,6 @@
         }
         else if(![[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
             // I have no idea why, but this is faster than downloading it later
-            NSLog(@"canvasBackground creating artificially");
             NSData *URLData = [NSData dataWithContentsOfURL:fallbackURL];
             if(URLData) [URLData writeToFile:filePath atomically:YES];
         }
@@ -70,12 +69,6 @@
 - (void)applicationWillTerminate:(id)arg1 {
     %orig;
     [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client"];
-}
-%end
-
-%hook SPTVideoURLAssetLoaderImplementation
-- (SPTVideoURLAssetLoaderImplementation *)initWithNetworkConnectivityController:(id)arg1 requestAccountant:(id)arg2 serviceIdentifier:(id)arg3 HTTPMaximumConnectionsPerHost:(long long)arg4 timeoutIntervalForRequest:(double)arg5 timeoutIntervalForResource:(double)arg6 {
-	return assetLoader = %orig;
 }
 %end
 
