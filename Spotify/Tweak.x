@@ -57,13 +57,6 @@
 }
 %end
 
-// Ensures canvas will be available for all devices
-%hook SPTCanvasCompatibilityManager
-+ (BOOL)shouldEnableCanvasForDevice {
-	return YES;
-}
-%end
-
 // Makes sure that canvas will disappear once app closes
 %hook _TtC15ContainerWiring18SpotifyAppDelegate
 - (void)applicationWillTerminate:(id)arg1 {
@@ -74,6 +67,7 @@
 
 %hook SPTGLUEImageLoader
 - (SPTGLUEImageLoader *)initWithImageLoader:(id)arg1 sourceIdentifier:(id)arg2 {
-    return imageLoader = %orig;
+    if(!imageLoader) imageLoader = %orig;
+    return %orig;
 }
 %end

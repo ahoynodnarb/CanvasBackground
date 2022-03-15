@@ -10,7 +10,8 @@ static NSCache *_playerCache = nil;
 }
 - (void)togglePlayer:(NSNotification *)note {
 	BOOL isPlaying = [[note.userInfo objectForKey:@"isPlaying"] boolValue];
-	if(isPlaying) [self.canvasPlayer play];
+    self.playerPlaying = isPlaying;
+	if(isPlaying && !self.view.hidden) [self.canvasPlayer play];
 	else [self.canvasPlayer pause];
 }
 /*
@@ -68,21 +69,22 @@ static NSCache *_playerCache = nil;
 - (void)viewDidLoad {
 	[super viewDidLoad];
     if(!CBViewController.playerCache) CBViewController.playerCache = [[NSCache alloc] init];
+    self.playerPlaying = YES;
 	self.thumbnailView = [[UIImageView alloc] initWithFrame:self.view.frame];
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
-	[self.thumbnailView setContentMode:UIViewContentModeScaleAspectFill];
-	[self.thumbnailView setHidden:YES];
-	[self.canvasPlayer setVolume:0];
-	[self.canvasPlayer setPreventsDisplaySleepDuringVideoPlayback:NO];
-	[self.canvasPlayerLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
-	[self.canvasPlayerLayer setFrame:self.view.bounds];
-	[self.canvasPlayerLayer setHidden:YES];
+	self.thumbnailView.contentMode = UIViewContentModeScaleAspectFill;
+	self.thumbnailView.hidden = YES;
+	self.canvasPlayer.volume = 0;
+	self.canvasPlayer.preventsDisplaySleepDuringVideoPlayback = NO;
+	self.canvasPlayerLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+	self.canvasPlayerLayer.frame = self.view.bounds;
+	self.canvasPlayerLayer.hidden = NO;
+    self.view.clipsToBounds = YES;
+    self.view.contentMode = UIViewContentModeScaleAspectFill;
 	[self.view.layer insertSublayer:self.canvasPlayerLayer atIndex:0];
 	[self.view.layer setSecurityMode:@"secure"];
 	[self.view insertSubview:self.thumbnailView atIndex:0];
-    [self.view setClipsToBounds:YES];
-    [self.view setContentMode:UIViewContentModeScaleAspectFill];
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(recreateCanvasPlayer:) name:@"recreateCanvas" object:@"com.spotify.client"];
@@ -99,9 +101,14 @@ static NSCache *_playerCache = nil;
     [self.thumbnailView setFrame:self.view.superview.bounds];
     [self.canvasPlayerLayer setFrame:self.view.bounds];
 }
+- (void)viewDidDisappear:(BOOL)animated {
+	[super viewDidDisappear:animated];
+    [self.canvasPlayer pause];
+    self.view.hidden = YES;
+}
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
-	[self.canvasPlayerLayer setHidden:NO];
-	[self.canvasPlayer play];
+    self.view.hidden = NO;
+    if(self.playerPlaying) [self.canvasPlayer play];
 }
 @end

@@ -7,6 +7,7 @@
 @property (nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
 @property (nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
 @property (nonatomic, strong) UIImageView *thumbnailView;
+@property (nonatomic, assign) BOOL playerPlaying;
 - (void)recreateCanvasPlayer:(NSNotification *)note;
 - (void)togglePlayer:(NSNotification *)note;
 @end
