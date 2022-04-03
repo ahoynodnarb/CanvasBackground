@@ -6,8 +6,6 @@
 @interface SBHomeScreenViewController : UIViewController
 @property (nonatomic, assign) BOOL iconControllerHidden;
 @end
-// @interface SBHomeScreenViewController : UIViewController
-// @end
 @interface CSFixedFooterViewController : UIViewController
 @end
 
