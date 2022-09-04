@@ -13,7 +13,7 @@
 %hook SBHomeScreenViewController
 - (void)loadView {
 	%orig;
-    [self.view setClipsToBounds:YES];
+    self.view.clipsToBounds = YES;
 	homescreenController = [[CBViewController alloc] init];
 	if(!homescreenController.view) homescreenController.view = [[UIView alloc] initWithFrame:self.view.bounds];
     [self.view insertSubview:homescreenController.view atIndex:0];
@@ -28,7 +28,7 @@
 %hook CSFixedFooterViewController
 - (void)loadView {
     %orig;
-    [self.view setClipsToBounds:YES];
+    self.view.clipsToBounds = YES;
     lockscreenController = [[CBViewController alloc] init];
 	if(!lockscreenController.view) lockscreenController.view = [[UIView alloc] initWithFrame:self.view.bounds];
     [self.view addSubview:lockscreenController.view];

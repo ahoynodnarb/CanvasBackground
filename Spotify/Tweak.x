@@ -19,25 +19,22 @@
       have a canvas to play.
     */
     if(fallbackURL) {
-        if(!localURL) {
-            [userInfo setObject:fallbackURL.absoluteString forKey:@"currentURL"];
-            [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
-            return;
+        [userInfo setObject:[NSNumber numberWithBool:[fallbackURL.absoluteString containsString:@"/image/"]] forKey:@"canvasIsStatic"];
+        if(!localURL) [userInfo setObject:fallbackURL.absoluteString forKey:@"currentURL"];
+        else {
+            [userInfo setObject:localURL.absoluteString forKey:@"currentURL"];
+            if(![[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+                NSData *URLData = [NSData dataWithContentsOfURL:fallbackURL];
+                if(URLData) [URLData writeToFile:filePath atomically:YES];
+            }
         }
-        else if(![[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
-            // I have no idea why, but this is faster than downloading it later
-            NSData *URLData = [NSData dataWithContentsOfURL:fallbackURL];
-            if(URLData) [URLData writeToFile:filePath atomically:YES];
-        }
-        [userInfo setObject:localURL.absoluteString forKey:@"currentURL"];
         [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
+        return;
     }
-    else {
-        [imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork) {
-            if(artwork) [userInfo setObject:UIImagePNGRepresentation(artwork) forKey:@"artwork"];
-            [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
-        }];
-    }
+    [imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork) {
+        if(artwork) [userInfo setObject:UIImagePNGRepresentation(artwork) forKey:@"artwork"];
+        [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
+    }];
 }
 - (void)playerDidUpdateTrackPosition:(SPTStatefulPlayerImplementation *)arg1 {
 	%orig;

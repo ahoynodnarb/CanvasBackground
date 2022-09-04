@@ -2,7 +2,6 @@
 #import <Foundation/NSDistributedNotificationCenter.h>
 
 @interface CBViewController : UIViewController
-@property (class, nonatomic, strong) NSCache *playerCache;
 @property (nonatomic, strong) AVQueuePlayer *canvasPlayer;
 @property (nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
 @property (nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
