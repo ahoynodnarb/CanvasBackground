@@ -62,7 +62,6 @@
     self.view.contentMode = UIViewContentModeScaleAspectFill;
 	[self.view insertSubview:self.thumbnailView atIndex:0];
 	[self.view.layer insertSublayer:self.canvasPlayerLayer atIndex:0];
-	[self.view.layer setSecurityMode:@"secure"];
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(recreateCanvasPlayer:) name:@"recreateCanvas" object:@"com.spotify.client"];
@@ -83,5 +82,8 @@
 	[super viewWillAppear:animated];
     self.view.hidden = NO;
     if(self.playerPlaying) [self.canvasPlayer play];
+}
+- (BOOL)_canShowWhileLocked {
+    return YES;
 }
 @end
