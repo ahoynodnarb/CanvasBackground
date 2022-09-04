@@ -1,12 +1,12 @@
 #import "SpringBoard.h"
 
 %hook SBMediaController
+%property (nonatomic, strong) SBApplication *previousApplication;
 - (void)_setNowPlayingApplication:(SBApplication *)application {
 	%orig;
-    // removes video from lockscreen when there's no now playing app
-    // if there is, it asks spotify to send the notification
 	if(!application || ![application.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client"];
-    else [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"sendNotification" object:@"com.spotify.client"];
+    else if(self.previousApplication) [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"sendNotification" object:@"com.spotify.client"];
+    self.previousApplication = application;
 }
 %end
 

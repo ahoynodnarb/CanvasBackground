@@ -16,5 +16,11 @@
 @interface SPTGLUEImageLoader
 - (void)loadImageForURL:(NSURL *)url imageSize:(CGSize)size completion:(id)completion;
 @end
+@protocol SPTGLUEImageLoaderFactory
+- (id)createImageLoaderForSourceIdentifier:(NSString *)arg1;
+@end
+@interface SPTQueueServiceImplementation
+@property(retain, nonatomic) id <SPTGLUEImageLoaderFactory> glueImageLoaderFactory;
+@end
 
 SPTGLUEImageLoader *imageLoader;
