@@ -8,31 +8,31 @@
     NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
     NSURL *fallbackURL = [NSURL URLWithString:track.metadata[@"canvas.url"]];
     NSString *libraryPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSString *fileName = [[[fallbackURL path] stringByReplacingOccurrencesOfString:@"/" withString:@"-"] substringFromIndex:1];
+    NSString *fileName = [[fallbackURL.path stringByReplacingOccurrencesOfString:@"/" withString:@"-"] substringFromIndex:1];
     NSString *filePath = [NSString stringWithFormat:@"%@/Caches/Canvases/%@",libraryPath,fileName];
     NSURL *localURL = [NSURL fileURLWithPath:filePath];
     BOOL useCache = [[NSFileManager defaultManager] fileExistsAtPath:filePath];
-    /*
-      Sometimes the localURL gives us the folder, so we check if it's a file or folder. 
-      If the canvas hasn't been cached before it still gives us a technically valid file 
-      but it doesn't exist yet. If localURL is a folder or there is no local asset, then
-      download the URL to a cached file. If there's no fallback then the track must not
-      have a canvas to play.
-    */
-    if(fallbackURL) {
-        [userInfo setObject:[NSNumber numberWithBool:[fallbackURL.absoluteString containsString:@"/image/"]] forKey:@"canvasIsStatic"];
-        [userInfo setObject:localURL.absoluteString forKey:@"currentURL"];
-        if(!useCache) {
-            NSData *URLData = [NSData dataWithContentsOfURL:fallbackURL];
-            if(URLData) [URLData writeToFile:filePath atomically:YES];
-        }
+    BOOL isStatic = [fallbackURL.absoluteString containsString:@"/image/"];
+    BOOL useArtwork = fallbackURL == nil;
+    if(useArtwork) {
+        [imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork) {
+            if(artwork) [userInfo setObject:UIImagePNGRepresentation(artwork) forKey:@"artwork"];
+            [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
+        }];
+        return;
+    }
+    if(isStatic) {
+        NSData *URLData = [NSData dataWithContentsOfURL:fallbackURL];
+        [userInfo setObject:URLData forKey:@"artwork"];
         [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
         return;
     }
-    [imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork) {
-        if(artwork) [userInfo setObject:UIImagePNGRepresentation(artwork) forKey:@"artwork"];
-        [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
-    }];
+    if(!useCache) {
+        NSData *URLData = [NSData dataWithContentsOfURL:fallbackURL];
+        if(URLData) [URLData writeToFile:filePath atomically:YES];
+    }
+    [userInfo setObject:localURL.absoluteString forKey:@"currentURL"];
+    [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
 }
 - (void)player:(id)arg1 didMoveToRelativeTrack:(id)arg2 {
     %orig;

@@ -7,13 +7,7 @@
 	if(isPlaying && !self.view.hidden) [self.canvasPlayer play];
 	else [self.canvasPlayer pause];
 }
-- (void)updateCanvasWithURL:(NSURL *)URL statically:(BOOL)isStatic {
-    if(isStatic) {
-        NSData *canvasImageData = [NSData dataWithContentsOfURL:URL];
-        UIImage *canvasImage = [UIImage imageWithData:canvasImageData];
-        self.thumbnailView.image = canvasImage;
-        return;
-    }
+- (void)updateCanvasForURL:(NSURL *)URL {
     AVPlayerItem *currentItem = [AVPlayerItem playerItemWithURL:URL];
     self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:currentItem];
     [self.canvasPlayer play];
@@ -33,9 +27,8 @@
     NSDictionary *userInfo = note.userInfo;
     NSURL *currentVideoURL = [NSURL URLWithString:[userInfo objectForKey:@"currentURL"]];
     NSURL *previousTrackURL = [(AVURLAsset *)self.canvasPlayer.currentItem.asset URL];
-    BOOL canvasIsStatic = [[userInfo objectForKey:@"canvasIsStatic"] boolValue];
     if(currentVideoURL && ![currentVideoURL isEqual:previousTrackURL]) {
-        [self updateCanvasWithURL:currentVideoURL statically:canvasIsStatic];
+        [self updateCanvasForURL:currentVideoURL];
         [self updateThumbnailForURL:currentVideoURL];
         return;
 	}
