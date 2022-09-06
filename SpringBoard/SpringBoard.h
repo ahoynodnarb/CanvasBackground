@@ -3,6 +3,9 @@
 @interface SBApplication
 @property (nonatomic, strong) NSString *bundleIdentifier;
 @end
+@interface SBMediaController
+@property (nonatomic, strong) SBApplication *previousApplication;
+@end
 @interface SBHomeScreenViewController : UIViewController
 @property (nonatomic, assign) BOOL iconControllerHidden;
 @end
