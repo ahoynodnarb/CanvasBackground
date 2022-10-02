@@ -27,9 +27,11 @@
     NSDictionary *userInfo = note.userInfo;
     NSURL *currentVideoURL = [NSURL URLWithString:[userInfo objectForKey:@"currentURL"]];
     NSURL *previousTrackURL = [(AVURLAsset *)self.canvasPlayer.currentItem.asset URL];
-    if(currentVideoURL && ![currentVideoURL isEqual:previousTrackURL]) {
-        [self updateCanvasForURL:currentVideoURL];
-        [self updateThumbnailForURL:currentVideoURL];
+    if(currentVideoURL) {
+        if(![currentVideoURL isEqual:previousTrackURL]) {
+            [self updateCanvasForURL:currentVideoURL];
+            [self updateThumbnailForURL:currentVideoURL];
+        }
         return;
 	}
     [self.canvasPlayer removeAllItems];
