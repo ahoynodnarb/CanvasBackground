@@ -1,3 +1,4 @@
+#import <UIKit/UIKit.h>
 #import <Foundation/NSDistributedNotificationCenter.h>
 
 @interface SPTPlayerTrack : NSObject
@@ -6,7 +7,6 @@
 @end
 @interface SPTStatefulPlayerImplementation
 @property (nonatomic, assign) BOOL isPaused;
-@property (nonatomic, strong) SPTPlayerTrack *currentTrack;
 @end
 @interface SPTNowPlayingModel
 @property (nonatomic, strong) SPTPlayerTrack *previousTrack;

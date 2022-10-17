@@ -1,3 +1,4 @@
+#import <UIKit/UIKit.h>
 #import "CBViewController.h"
 
 @interface SBApplication

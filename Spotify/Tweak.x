@@ -7,29 +7,35 @@
     SPTPlayerTrack *track = self.currentTrack;
     NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
     NSURL *fallbackURL = [NSURL URLWithString:track.metadata[@"canvas.url"]];
-    NSString *libraryPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSString *fileName = [[fallbackURL.path stringByReplacingOccurrencesOfString:@"/" withString:@"-"] substringFromIndex:1];
-    NSString *filePath = [NSString stringWithFormat:@"%@/Caches/Canvases/%@",libraryPath,fileName];
-    NSURL *localURL = [NSURL fileURLWithPath:filePath];
-    BOOL useCache = [[NSFileManager defaultManager] fileExistsAtPath:filePath];
-    BOOL isStatic = [fallbackURL.absoluteString containsString:@"/image/"];
-    BOOL useArtwork = fallbackURL == nil;
-    if(useArtwork) {
+    BOOL isStatic = [track.metadata[@"canvas.type"] isEqualToString:@"IMAGE"];
+    NSLog(@"canvsBackground %@", fallbackURL);
+    if(!fallbackURL) {
         [imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork) {
             if(artwork) [userInfo setObject:UIImagePNGRepresentation(artwork) forKey:@"artwork"];
             [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
         }];
         return;
     }
-    if(isStatic) {
-        NSData *URLData = [NSData dataWithContentsOfURL:fallbackURL];
-        [userInfo setObject:URLData forKey:@"artwork"];
-        [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
-        return;
-    }
+    NSString *libraryPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSString *fileName = [[fallbackURL.path stringByReplacingOccurrencesOfString:@"/" withString:@"-"] substringFromIndex:1];
+    NSString *filePath = [NSString stringWithFormat:@"%@/Caches/Canvases/%@",libraryPath,fileName];
+    NSURL *localURL = [NSURL fileURLWithPath:filePath];
+    BOOL useCache = [[NSFileManager defaultManager] fileExistsAtPath:filePath];
     if(!useCache) {
         NSData *URLData = [NSData dataWithContentsOfURL:fallbackURL];
         if(URLData) [URLData writeToFile:filePath atomically:YES];
+    }
+    if(isStatic) {
+        if(useCache) {
+            NSData *imageData = [NSData dataWithContentsOfFile:filePath];
+            [userInfo setObject:imageData forKey:@"artwork"];
+        }
+        else {
+            NSData *URLData = [NSData dataWithContentsOfURL:fallbackURL];
+            [userInfo setObject:URLData forKey:@"artwork"];
+        }
+        [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
+        return;
     }
     [userInfo setObject:localURL.absoluteString forKey:@"currentURL"];
     [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client" userInfo:userInfo];
