@@ -8,6 +8,6 @@
 @property (nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
 @property (nonatomic, strong) UIImageView *thumbnailView;
 @property (nonatomic, assign) BOOL playerPlaying;
-- (void)recreateCanvasPlayer:(NSNotification *)note;
+- (void)recreateCanvasWithVideoURL:(NSURL *)currentVideoURL imageData:(NSData *)imageData;
 - (void)togglePlayer:(NSNotification *)note;
 @end

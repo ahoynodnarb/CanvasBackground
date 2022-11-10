@@ -1,12 +1,12 @@
 #import "SpringBoard.h"
 
 %hook SBMediaController
-%property (nonatomic, strong) SBApplication *previousApplication;
 - (void)_setNowPlayingApplication:(SBApplication *)application {
 	%orig;
-	if(!application || ![application.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"recreateCanvas" object:@"com.spotify.client"];
-    else if(self.previousApplication) [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"sendNotification" object:@"com.spotify.client"];
-    self.previousApplication = application;
+	if(![application.bundleIdentifier isEqualToString:@"com.spotify.client"]) {
+        [lockscreenController recreateCanvasWithVideoURL:nil imageData:nil];
+        [homescreenController recreateCanvasWithVideoURL:nil imageData:nil];
+    }
 }
 %end
 
@@ -18,6 +18,7 @@
 	if(!homescreenController.view) homescreenController.view = [[UIView alloc] initWithFrame:self.view.bounds];
     [self.view insertSubview:homescreenController.view atIndex:0];
 }
+
 -(void)setIconControllerHidden:(BOOL)arg1 {
     %orig;
     if(arg1) [homescreenController viewDidDisappear:NO];
