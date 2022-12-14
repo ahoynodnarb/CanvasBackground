@@ -2,7 +2,7 @@ Package: com.popsicletreehouse.canvasbackground
 Name: CanvasBackground
 Version: 0.0.1
 Architecture: iphoneos-arm
-Description: Bring Spotifys canvas to your lock and homescreen
+Description: Bring Spotify's canvas to your lock and homescreen
 Maintainer: PopsicleTreehouse
 Author: PopsicleTreehouse
 Section: Tweaks
