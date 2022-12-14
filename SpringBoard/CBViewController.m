@@ -4,7 +4,7 @@
 - (void)togglePlayer:(NSNotification *)note {
 	BOOL isPlaying = [[note.userInfo objectForKey:@"isPlaying"] boolValue];
     self.playerPlaying = isPlaying;
-	if(isPlaying && !self.view.hidden) [self.canvasPlayer play];
+	if (isPlaying && !self.view.hidden) [self.canvasPlayer play];
 	else [self.canvasPlayer pause];
 }
 
@@ -34,12 +34,12 @@
 */
 - (void)recreateCanvasWithVideoURL:(NSURL *)currentVideoURL imageData:(NSData *)imageData {
     NSURL *previousTrackURL = [(AVURLAsset *)self.canvasPlayer.currentItem.asset URL];
-    if(!currentVideoURL) {
+    if (!currentVideoURL) {
         [self.canvasPlayer removeAllItems];
         self.thumbnailView.image = [UIImage imageWithData:imageData];
         return;
     }
-    if(![currentVideoURL isEqual:previousTrackURL]) {
+    if (![currentVideoURL isEqual:previousTrackURL]) {
         [self updateCanvasForURL:currentVideoURL];
         [self updateThumbnailForURL:currentVideoURL];
     }
@@ -60,15 +60,25 @@
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
 	self.canvasPlayerLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
 	self.canvasPlayerLayer.frame = self.view.bounds;
-    [self.canvasPlayerLayer addObserver:self forKeyPath:@"readyForDisplay" options:0 context:nil];
+    [self.canvasPlayerLayer addObserver:self 
+                             forKeyPath:@"readyForDisplay" 
+                                options:0 
+                                context:nil];
     self.view.clipsToBounds = YES;
     self.view.contentMode = UIViewContentModeScaleAspectFill;
 	[self.view insertSubview:self.thumbnailView atIndex:0];
 	[self.view.layer insertSublayer:self.canvasPlayerLayer atIndex:0];
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
-	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
-	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(recreateNotificationReceived:) name:@"recreateCanvas" object:@"com.spotify.client"];
-	[[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(togglePlayer:) name:@"togglePlayer" object:@"com.spotify.client"];
+    NSDistributedNotificationCenter *defaultCenter = [NSDistributedNotificationCenter defaultCenter];
+	[defaultCenter removeObserver:self];
+	[defaultCenter addObserver:self
+                      selector:@selector(recreateNotificationReceived:)
+                          name:@"recreateCanvas"
+                        object:@"com.spotify.client"];
+	[defaultCenter addObserver:self
+                      selector:@selector(togglePlayer:)
+                          name:@"togglePlayer"
+                        object:@"com.spotify.client"];
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -80,7 +90,7 @@
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
     self.view.hidden = NO;
-    if(self.playerPlaying) [self.canvasPlayer play];
+    if (self.playerPlaying) [self.canvasPlayer play];
 }
 
 - (BOOL)_canShowWhileLocked {
