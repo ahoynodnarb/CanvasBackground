@@ -1,5 +1,5 @@
 #import <UIKit/UIKit.h>
-#import <Foundation/NSDistributedNotificationCenter.h>
+#import <MRYIPCCenter.h>
 
 @protocol SPTGLUEImageLoaderFactory
 - (id)createImageLoaderForSourceIdentifier:(NSString *)arg1;
@@ -19,12 +19,11 @@
 @end
 
 @interface SPTNowPlayingModel
-@property (nonatomic, strong) SPTPlayerTrack *previousTrack;
-@property (nonatomic, strong) SPTPlayerTrack *currentTrack;
+@property (nonatomic, strong) MRYIPCCenter *center;
 @property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
-- (NSDictionary *)loadUserInfoForCanvas:(NSString *)filePath isImage:(BOOL)isImage;
-- (void)loadUserInfoForImage:(NSURL *)imageURL callback:(void(^)(NSDictionary *))callback;
-- (void)sendCanvasUpdateNotification;
+@property (nonatomic, strong) SPTPlayerTrack *currentTrack;
++ (NSURL *)localURLForCanvas:(NSURL *)canvasURL;
+- (void)sendUpdateMessage;
 @end
 
 @interface SPTQueueServiceImplementation

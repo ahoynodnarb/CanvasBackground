@@ -3,7 +3,7 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = CanvasBackgroundSpringBoard
 
-CanvasBackgroundSpringBoard_FILES = Tweak.x CBViewController.m
+CanvasBackgroundSpringBoard_FILES = $(wildcard *.x) $(wildcard *.m)
 CanvasBackgroundSpringBoard_CFLAGS = -fobjc-arc
 
 include $(THEOS_MAKE_PATH)/tweak.mk
