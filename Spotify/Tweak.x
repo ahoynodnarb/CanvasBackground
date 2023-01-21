@@ -13,14 +13,11 @@
 
 %new
 - (void)sendUpdateMessage {
-    SPTPlayerTrack *track = self.currentTrack;
+    SPTPlayerTrack *track = [self currentTrack];
     NSURL *fallbackURL = [NSURL URLWithString:track.metadata[@"canvas.url"]];
-    NSLog(@"canvasbackground sending update %@", fallbackURL);
     if (!fallbackURL) {
-        [self.imageLoader loadImageForURL:fallbackURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork) {
-            NSLog(@"canvasbackground imageLoader");
+        [self.imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork, NSError *error) {
             if (artwork) {
-                NSLog(@"canvasbackground sending image data");
                 NSData *imageData = UIImagePNGRepresentation(artwork);
                 [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
             }
@@ -35,10 +32,7 @@
         NSData *imageData = [NSData dataWithContentsOfURL:URL];
         [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
     }
-    else {
-        NSLog(@"canvasbackground updating URL %@", self.center);
-        [self.center callExternalVoidMethod:@selector(updateWithVideoURL:) withArguments:URL.absoluteString];
-    }
+    else [self.center callExternalVoidMethod:@selector(updateWithVideoURL:) withArguments:URL.absoluteString];
 }
 
 - (void)player:(id)arg1 didMoveToRelativeTrack:(id)arg2 {
@@ -51,11 +45,10 @@
     [self.center callExternalVoidMethod:@selector(setPlaying:) withArguments:@(!arg1.isPaused)];
 }
 
-- (id)initWithPlayer:(id)player collectionPlatform:(id)arg2 playlistDataLoader:(id)arg3 radioPlaybackService:(id)arg4 adsManager:(id)arg5 productState:(id)arg6 queueService:(SPTQueueServiceImplementation *)queueService testManager:(id)arg8 collectionTestManager:(id)arg9 statefulPlayer:(id)statefulPlayer yourEpisodesSaveManager:(id)arg11 educationEligibility:(id)arg12 reinventFreeConfiguration:(id)arg13 curationPlatform:(id)arg14 {
+- (id)initWithPlayer:(id)arg1 collectionPlatform:(id)arg2 playlistDataLoader:(id)arg3 radioPlaybackService:(id)arg4 adsManager:(id)arg5 productState:(id)arg6 queueService:(SPTQueueServiceImplementation *)queueService testManager:(id)arg8 collectionTestManager:(id)arg9 statefulPlayer:(id)arg10 yourEpisodesSaveManager:(id)arg11 educationEligibility:(id)arg12 reinventFreeConfiguration:(id)arg13 curationPlatform:(id)arg14 {
     id<SPTGLUEImageLoaderFactory> factory = queueService.glueImageLoaderFactory;
     self.center = [%c(MRYIPCCenter) centerNamed:@"CanvasBackground.CanvasServer"];
     self.imageLoader = [factory createImageLoaderForSourceIdentifier:@"com.popsicletreehouse.CanvasBackground"];
-    NSLog(@"canvasbackground %@ %@", self.center, self.imageLoader);
     return %orig;
 }
 %end

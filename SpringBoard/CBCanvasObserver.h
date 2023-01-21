@@ -4,5 +4,5 @@
 @required
 - (void)updateWithImage:(UIImage *)image;
 - (void)updateWithVideoURL:(NSURL *)URL;
-- (void)setPlaying:(BOOL)paused;
+- (void)setPlaying:(BOOL)playing;
 @end
