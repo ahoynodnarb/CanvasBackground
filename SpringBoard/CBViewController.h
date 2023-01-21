@@ -1,13 +1,13 @@
 #import <UIKit/UIKit.h>
 #import <AVKit/AVKit.h>
-#import <Foundation/NSDistributedNotificationCenter.h>
+#import "CBCanvasServer.h"
+#import "CBCanvasObserver.h"
 
-@interface CBViewController : UIViewController
-@property (nonatomic, strong) AVQueuePlayer *canvasPlayer;
-@property (nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
-@property (nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
-@property (nonatomic, strong) UIImageView *thumbnailView;
-@property (nonatomic, assign) BOOL playerPlaying;
-- (void)recreateCanvasWithVideoURL:(NSURL *)currentVideoURL imageData:(NSData *)imageData;
-- (void)togglePlayer:(NSNotification *)note;
+@interface CBViewController : UIViewController <CBCanvasObserver>
+@property (nonatomic, assign) BOOL playing;
+@property (nonatomic, weak) CBCanvasServer *server;
+- (instancetype)initWithCanvasServer:(CBCanvasServer *)server;
+- (void)updateWithImage:(UIImage *)image;
+- (void)updateWithVideoURL:(NSURL *)URL;
+- (void)invalidate;
 @end

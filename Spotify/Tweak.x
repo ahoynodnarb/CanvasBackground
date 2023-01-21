@@ -1,85 +1,54 @@
 #import "Spotify.h"
 
-NSString *PathForCanvas(NSURL *canvasURL) {
+%hook SPTNowPlayingModel
+%property (nonatomic, strong) MRYIPCCenter *center;
+%property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
+%new
++ (NSURL *)localURLForCanvas:(NSURL *)canvasURL {
     NSString *libraryPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
     NSString *fileName = [[canvasURL.path stringByReplacingOccurrencesOfString:@"/" withString:@"-"] substringFromIndex:1];
     NSString *filePath = [NSString stringWithFormat:@"%@/Caches/Canvases/%@",libraryPath,fileName];
-    return filePath;
-}
-
-%hook SPTNowPlayingModel
-%property (nonatomic, strong) SPTPlayerTrack *previousTrack;
-%property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
-
-%new
-- (void)loadUserInfoForImage:(NSURL *)imageURL callback:(void(^)(NSDictionary *))callback {
-    [self.imageLoader loadImageForURL:imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork) {
-        NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
-        if (artwork) [userInfo setObject:UIImagePNGRepresentation(artwork) forKey:@"artwork"];
-        callback(userInfo);
-    }];
+    return [NSURL fileURLWithPath:filePath];
 }
 
 %new
-- (NSDictionary *)loadUserInfoForCanvas:(NSString *)filePath isImage:(BOOL)isImage {
-    NSMutableDictionary *userInfo = [[NSMutableDictionary alloc] init];
-    NSURL *localURL = [NSURL fileURLWithPath:filePath];
-    if (!isImage) {
-        [userInfo setObject:localURL.absoluteString forKey:@"currentURL"];
-        return userInfo;
-    }
-    NSData *imageData = [NSData dataWithContentsOfFile:filePath];
-    [userInfo setObject:imageData forKey:@"artwork"];
-    return userInfo;
-}
-
-%new
-- (void)sendCanvasUpdateNotification {
-    SPTPlayerTrack *track = self.currentTrack;
+- (void)sendUpdateMessage {
+    SPTPlayerTrack *track = [self currentTrack];
     NSURL *fallbackURL = [NSURL URLWithString:track.metadata[@"canvas.url"]];
-    NSDistributedNotificationCenter *defaultCenter = [NSDistributedNotificationCenter defaultCenter];
     if (!fallbackURL) {
-        [self loadUserInfoForImage:track.imageURL callback:^(NSDictionary *userInfo){
-            [defaultCenter postNotificationName:@"recreateCanvas" 
-                                         object:@"com.spotify.client" 
-                                       userInfo:userInfo];
+        [self.imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork, NSError *error) {
+            if (artwork) {
+                NSData *imageData = UIImagePNGRepresentation(artwork);
+                [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
+            }
         }];
         return;
     }
-    BOOL isStatic = [track.metadata[@"canvas.type"] isEqualToString:@"IMAGE"];
-    NSString *filePath = PathForCanvas(fallbackURL);
-    NSDictionary *userInfo = [self loadUserInfoForCanvas:filePath isImage:isStatic];
-    BOOL useCache = [[NSFileManager defaultManager] fileExistsAtPath:filePath];
-    if (!useCache) {
-        NSData *URLData = [NSData dataWithContentsOfURL:fallbackURL];
-        if (URLData) [URLData writeToFile:filePath atomically:YES];
+    NSURL *fileURL = [%c(SPTNowPlayingModel) localURLForCanvas:fallbackURL];
+    BOOL canvasStatic = [track.metadata[@"canvas.type"] isEqualToString:@"IMAGE"];
+    BOOL cached = [[NSFileManager defaultManager] fileExistsAtPath:fileURL.path];
+    NSURL *URL = cached ? fileURL : fallbackURL;
+    if (canvasStatic) {
+        NSData *imageData = [NSData dataWithContentsOfURL:URL];
+        [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
     }
-    [defaultCenter postNotificationName:@"recreateCanvas"
-                                 object:@"com.spotify.client"
-                               userInfo:userInfo];
+    else [self.center callExternalVoidMethod:@selector(updateWithVideoURL:) withArguments:URL.absoluteString];
 }
 
 - (void)player:(id)arg1 didMoveToRelativeTrack:(id)arg2 {
     %orig;
-    [self sendCanvasUpdateNotification];
+    [self sendUpdateMessage];
 }
 
 - (void)playerDidUpdatePlaybackControls:(SPTStatefulPlayerImplementation *)arg1 {
     %orig;
-    NSDistributedNotificationCenter *defaultCenter = [NSDistributedNotificationCenter defaultCenter];
-	[defaultCenter postNotificationName:@"togglePlayer"
-                                 object:@"com.spotify.client"
-                               userInfo:@{@"isPlaying": [NSNumber numberWithBool:!arg1.isPaused]}];
+    [self.center callExternalVoidMethod:@selector(setPlaying:) withArguments:@(!arg1.isPaused)];
 }
 
-- (id)initWithPlayer:(id)arg1 collectionPlatform:(id)arg2 playlistDataLoader:(id)arg3 radioPlaybackService:(id)arg4 adsManager:(id)arg5 productState:(id)arg6 queueService:(SPTQueueServiceImplementation *)queueService testManager:(id)arg8 collectionTestManager:(id)arg9 statefulPlayer:(id)arg10 yourEpisodesSaveManager:(id)arg11 educationEligibility:(id)arg12 reinventFreeConfiguration:(id)arg13 {
+- (id)initWithPlayer:(id)arg1 collectionPlatform:(id)arg2 playlistDataLoader:(id)arg3 radioPlaybackService:(id)arg4 adsManager:(id)arg5 productState:(id)arg6 queueService:(SPTQueueServiceImplementation *)queueService testManager:(id)arg8 collectionTestManager:(id)arg9 statefulPlayer:(id)arg10 yourEpisodesSaveManager:(id)arg11 educationEligibility:(id)arg12 reinventFreeConfiguration:(id)arg13 curationPlatform:(id)arg14 {
     id<SPTGLUEImageLoaderFactory> factory = queueService.glueImageLoaderFactory;
+    self.center = [%c(MRYIPCCenter) centerNamed:@"CanvasBackground.CanvasServer"];
     self.imageLoader = [factory createImageLoaderForSourceIdentifier:@"com.popsicletreehouse.CanvasBackground"];
-    NSNotificationCenter *defaultCenter = [NSNotificationCenter defaultCenter];
-    [defaultCenter addObserver:self
-                      selector:@selector(sendCanvasUpdateNotification)
-                          name:UIApplicationWillEnterForegroundNotification
-                        object:nil];
     return %orig;
 }
 %end
