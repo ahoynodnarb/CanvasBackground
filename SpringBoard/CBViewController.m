@@ -8,7 +8,7 @@
 @end
 
 @implementation CBViewController
-- (instancetype)initWithCanvasServer:(CBCanvasServer *)server {
+- (instancetype)initWithCanvasServer:(CBInfoTunnel *)server {
     if (self = [super init]) {
         self.server = server;
         [server addObserver:self];

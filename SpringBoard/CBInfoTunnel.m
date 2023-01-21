@@ -1,18 +1,18 @@
-#import "CBCanvasServer.h"
+#import "CBInfoTunnel.h"
 #import <MRYIPCCenter.h>
 
-@interface CBCanvasServer ()
+@interface CBInfoTunnel ()
 @property (nonatomic, strong) MRYIPCCenter *center;
 @end
 
-@implementation CBCanvasServer
-static CBCanvasServer *server;
+@implementation CBInfoTunnel
+static CBInfoTunnel *tunnel;
 
-+ (instancetype)sharedServer {
-    if (!server) {
-        server = [[self alloc] init];
++ (instancetype)sharedTunnel {
+    if (!tunnel) {
+        tunnel = [[self alloc] init];
     }
-    return server;
+    return tunnel;
 }
 
 - (instancetype)init {

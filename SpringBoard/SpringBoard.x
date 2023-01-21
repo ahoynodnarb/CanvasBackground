@@ -14,7 +14,7 @@
 - (void)loadView {
 	%orig;
     self.view.clipsToBounds = YES;
-	homescreenController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBCanvasServer sharedServer]];
+	homescreenController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBInfoTunnel sharedTunnel]];
 	if (!homescreenController.view) homescreenController.view = [[UIView alloc] initWithFrame:self.view.bounds];
     [self.view insertSubview:homescreenController.view atIndex:0];
 }
@@ -30,7 +30,7 @@
 - (void)loadView {
     %orig;
     self.view.clipsToBounds = YES;
-    lockscreenController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBCanvasServer sharedServer]];
+    lockscreenController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBInfoTunnel sharedTunnel]];
 	if (!lockscreenController.view) lockscreenController.view = [[UIView alloc] initWithFrame:self.view.bounds];
     [self.view addSubview:lockscreenController.view];
     [self addChildViewController:lockscreenController];

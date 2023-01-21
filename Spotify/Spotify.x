@@ -17,10 +17,9 @@
     NSURL *fallbackURL = [NSURL URLWithString:track.metadata[@"canvas.url"]];
     if (!fallbackURL) {
         [self.imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork, NSError *error) {
-            if (artwork) {
-                NSData *imageData = UIImagePNGRepresentation(artwork);
-                [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
-            }
+            if (!artwork) return;
+            NSData *imageData = UIImagePNGRepresentation(artwork);
+            [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
         }];
         return;
     }
