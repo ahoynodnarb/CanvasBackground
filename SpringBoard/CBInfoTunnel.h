@@ -8,6 +8,7 @@
 + (instancetype)sharedTunnel;
 - (void)addObserver:(id<CBCanvasObserver>)observer;
 - (void)removeObserver:(id<CBCanvasObserver>)observer;
+- (void)invalidate;
 - (void)updateWithVideoURL:(NSString *)URLString;
 - (void)updateWithImageData:(NSData *)data;
 - (void)setPlaying:(NSNumber *)number;

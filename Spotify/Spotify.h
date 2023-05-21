@@ -27,5 +27,6 @@
 @property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
 @property (nonatomic, strong) SPTPlayerTrack *currentTrack;
 + (NSURL *)localURLForCanvas:(NSURL *)canvasURL;
+- (void)sendTrackImage:(SPTPlayerTrack *)track;
 - (void)sendUpdateMessage;
 @end

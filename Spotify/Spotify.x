@@ -12,21 +12,25 @@
 }
 
 %new
+- (void)sendTrackImage:(SPTPlayerTrack *)track {
+    [self.imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork, NSError *error) {
+        if (!artwork) return;
+        NSData *imageData = UIImagePNGRepresentation(artwork);
+        [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
+    }];
+}
+
+%new
 - (void)sendUpdateMessage {
     SPTPlayerTrack *track = [self currentTrack];
-    NSURL *fallbackURL = [NSURL URLWithString:track.metadata[@"canvas.url"]];
-    if (!fallbackURL) {
-        [self.imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork, NSError *error) {
-            if (!artwork) return;
-            NSData *imageData = UIImagePNGRepresentation(artwork);
-            [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
-        }];
+    NSURL *originalURL = [NSURL URLWithString:track.metadata[@"canvas.url"]];
+    if (!originalURL) {
+        [self sendTrackImage:track];
         return;
     }
-    NSURL *fileURL = [%c(SPTNowPlayingModel) localURLForCanvas:fallbackURL];
+    NSURL *fileURL = [%c(SPTNowPlayingModel) localURLForCanvas:originalURL];
+    NSURL *URL = [[NSFileManager defaultManager] fileExistsAtPath:fileURL.path] ? fileURL : originalURL;
     BOOL canvasStatic = [track.metadata[@"canvas.type"] isEqualToString:@"IMAGE"];
-    BOOL cached = [[NSFileManager defaultManager] fileExistsAtPath:fileURL.path];
-    NSURL *URL = cached ? fileURL : fallbackURL;
     if (canvasStatic) {
         NSData *imageData = [NSData dataWithContentsOfURL:URL];
         [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];

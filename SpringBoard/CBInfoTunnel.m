@@ -34,6 +34,14 @@ static CBInfoTunnel *tunnel;
     [self.observers removeObject:observer];
 }
 
+- (void)invalidate {
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        for (id<CBCanvasObserver> observer in self.observers) {
+            [observer invalidate];
+        }
+    });
+}
+
 - (void)updateWithVideoURL:(NSString *)URLString {
     NSURL *URL = [NSURL URLWithString:URLString];
     dispatch_sync(dispatch_get_main_queue(), ^{

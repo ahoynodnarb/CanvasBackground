@@ -5,4 +5,5 @@
 - (void)updateWithImage:(UIImage *)image;
 - (void)updateWithVideoURL:(NSURL *)URL;
 - (void)setPlaying:(BOOL)playing;
+- (void)invalidate;
 @end

@@ -18,7 +18,8 @@
 
 - (void)invalidate {
     self.playing = NO;
-    [self updateWithImage:nil];
+    [self.canvasPlayer removeAllItems];
+    self.thumbnailView.image = nil;
 }
 
 - (void)setPlaying:(BOOL)playing {
@@ -47,6 +48,11 @@
     self.thumbnailView.hidden = self.canvasPlayerLayer.readyForDisplay;
 }
 
+- (void)setVisible:(BOOL)visible {
+    if (!visible) [self.canvasPlayer pause];
+    else if (self.playing) [self.canvasPlayer play];
+}
+
 - (void)viewDidLoad {
 	[super viewDidLoad];
 	self.thumbnailView = [[UIImageView alloc] initWithFrame:self.view.frame];
@@ -67,14 +73,12 @@
 
 - (void)viewDidDisappear:(BOOL)animated {
 	[super viewDidDisappear:animated];
-    self.view.hidden = YES;
-    [self.canvasPlayer pause];
+    [self setVisible:NO];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
-    self.view.hidden = NO;
-    if (self.playing) [self.canvasPlayer play];
+    [self setVisible:YES];
 }
 
 - (BOOL)_canShowWhileLocked {

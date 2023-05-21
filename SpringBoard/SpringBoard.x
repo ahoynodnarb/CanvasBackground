@@ -1,38 +1,34 @@
 #import "SpringBoard.h"
 
-%hook SBMediaController
-- (void)_setNowPlayingApplication:(SBApplication *)application {
-	%orig;
-	if (![application.bundleIdentifier isEqualToString:@"com.spotify.client"]) {
-        [lockscreenController invalidate];
-        [homescreenController invalidate];
-    }
-}
-%end
-
 %hook SBHomeScreenViewController
-- (void)loadView {
+%property (nonatomic, strong) CBViewController *canvasController;
+- (void)viewDidLoad {
 	%orig;
-    self.view.clipsToBounds = YES;
-	homescreenController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBInfoTunnel sharedTunnel]];
-	if (!homescreenController.view) homescreenController.view = [[UIView alloc] initWithFrame:self.view.bounds];
-    [self.view insertSubview:homescreenController.view atIndex:0];
+	self.canvasController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBInfoTunnel sharedTunnel]];
+    self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
+    [self.view insertSubview:self.canvasController.view atIndex:0];
+    [self addChildViewController:self.canvasController];
 }
-
-- (void)setIconControllerHidden:(BOOL)arg1 {
+- (void)setIconControllerHidden:(BOOL)hidden {
     %orig;
-    if (arg1) [homescreenController viewDidDisappear:NO];
-    else [homescreenController viewWillAppear:NO];
+    [self.canvasController setVisible:!hidden];
 }
 %end
 
-%hook CSFixedFooterViewController
-- (void)loadView {
+%hook CSMainPageContentViewController
+%property (nonatomic, strong) CBViewController *canvasController;
+- (void)viewDidLoad {
+	%orig;
+	self.canvasController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBInfoTunnel sharedTunnel]];
+    self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
+    [self.view insertSubview:self.canvasController.view atIndex:0];
+    [self addChildViewController:self.canvasController];
+}
+%end
+
+%hook FBProcessManager
+- (void)noteProcessDidExit:(FBProcess *)process {
     %orig;
-    self.view.clipsToBounds = YES;
-    lockscreenController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBInfoTunnel sharedTunnel]];
-	if (!lockscreenController.view) lockscreenController.view = [[UIView alloc] initWithFrame:self.view.bounds];
-    [self.view addSubview:lockscreenController.view];
-    [self addChildViewController:lockscreenController];
+    if ([process.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[CBInfoTunnel sharedTunnel] invalidate];
 }
 %end
