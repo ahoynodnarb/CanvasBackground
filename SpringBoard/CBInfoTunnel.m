@@ -9,9 +9,7 @@
 static CBInfoTunnel *tunnel;
 
 + (instancetype)sharedTunnel {
-    if (!tunnel) {
-        tunnel = [[self alloc] init];
-    }
+    if (!tunnel) tunnel = [[self alloc] init];
     return tunnel;
 }
 
@@ -26,6 +24,11 @@ static CBInfoTunnel *tunnel;
     return self;
 }
 
+- (void)executeBlock:(void (^)(void))block {
+    if ([NSThread isMainThread]) block();
+    else dispatch_sync(dispatch_get_main_queue(), block);
+}
+
 - (void)addObserver:(id<CBCanvasObserver>)observer {
     [self.observers addObject:observer];
 }
@@ -35,37 +38,41 @@ static CBInfoTunnel *tunnel;
 }
 
 - (void)invalidate {
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    void (^block)(void) = ^{
         for (id<CBCanvasObserver> observer in self.observers) {
             [observer invalidate];
         }
-    });
+    };
+    [self executeBlock:block];
 }
 
 - (void)updateWithVideoURL:(NSString *)URLString {
-    NSURL *URL = [NSURL URLWithString:URLString];
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    void (^block)(void) = ^{
+        NSURL *URL = [NSURL URLWithString:URLString];
         for (id<CBCanvasObserver> observer in self.observers) {
             [observer updateWithVideoURL:URL];
         }
-    });
+    };
+    [self executeBlock:block];
 }
 
 - (void)updateWithImageData:(NSData *)data {
-    UIImage *image = [UIImage imageWithData:data];
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    void (^block)(void) = ^{
+        UIImage *image = [UIImage imageWithData:data];
         for (id<CBCanvasObserver> observer in self.observers) {
             [observer updateWithImage:image];
         }
-    });
+    };
+    [self executeBlock:block];
 }
 
 - (void)setPlaying:(NSNumber *)number {
-    BOOL playing = [number boolValue];
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    void (^block)(void) = ^{
+        BOOL playing = [number boolValue];
         for (id<CBCanvasObserver> observer in self.observers) {
             [observer setPlaying:playing];
         }
-    });
+    };
+    [self executeBlock:block];
 }
 @end

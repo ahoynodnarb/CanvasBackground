@@ -1,5 +1,12 @@
 #import "SpringBoard.h"
 
+%hook SBMediaController
+- (void)_setNowPlayingApplication:(SBApplication *)application {
+	%orig;
+	if (![application.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[%c(CBInfoTunnel) sharedTunnel] invalidate];
+}
+%end
+
 %hook SBHomeScreenViewController
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
