@@ -3,7 +3,7 @@
 %hook SBMediaController
 - (void)_setNowPlayingApplication:(SBApplication *)application {
 	%orig;
-	if (![application.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[%c(CBInfoTunnel) sharedTunnel] invalidate];
+	if (![application.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[CBInfoTunnel sharedTunnel] invalidate];
 }
 %end
 
@@ -18,7 +18,7 @@
 }
 - (void)setIconControllerHidden:(BOOL)hidden {
     %orig;
-    [self.canvasController setVisible:!hidden];
+    [self.canvasController setSuspended:hidden];
 }
 %end
 
@@ -30,6 +30,11 @@
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
     [self.view insertSubview:self.canvasController.view atIndex:0];
     [self addChildViewController:self.canvasController];
+}
+- (BOOL)handleEvent:(CSEvent *)event {
+    if (event.type == 24) [self.canvasController setSuspended:YES];
+    if (event.type == 23) [self.canvasController setSuspended:NO];
+    return %orig;
 }
 %end
 

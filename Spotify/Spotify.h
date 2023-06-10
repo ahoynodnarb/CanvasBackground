@@ -1,6 +1,11 @@
 #import <UIKit/UIKit.h>
 #import <MRYIPCCenter.h>
 
+@interface SPTPlayerTrack : NSObject
+@property (copy, nonatomic) NSDictionary *metadata;
+@property (readonly, nonatomic) NSURL *imageURL;
+@end
+
 @interface SPTGLUEImageLoader
 - (void)loadImageForURL:(NSURL *)url imageSize:(CGSize)size completion:(id)completion;
 @end
@@ -10,23 +15,23 @@
 @end
 
 @interface SPTQueueServiceImplementation
-@property(retain, nonatomic) id <SPTGLUEImageLoaderFactory> glueImageLoaderFactory;
-@end
-
-@interface SPTPlayerTrack : NSObject
-@property (copy, nonatomic) NSDictionary *metadata;
-@property (readonly, nonatomic) NSURL *imageURL;
+@property (nonatomic, strong) id <SPTGLUEImageLoaderFactory> glueImageLoaderFactory;
 @end
 
 @interface SPTStatefulPlayerImplementation
 @property (nonatomic, assign) BOOL isPaused;
 @end
 
-@interface SPTNowPlayingModel
+@interface SPTNowPlayingModel : NSObject
 @property (nonatomic, strong) MRYIPCCenter *center;
 @property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
 @property (nonatomic, strong) SPTPlayerTrack *currentTrack;
 + (NSURL *)localURLForCanvas:(NSURL *)canvasURL;
+- (void)loadImageForTrack:(SPTPlayerTrack *)track completion:(void (^)(UIImage *, NSError *))completion;
 - (void)sendTrackImage:(SPTPlayerTrack *)track;
-- (void)sendUpdateMessage;
+- (void)sendUpdateWithTrack:(SPTPlayerTrack *)track;
+@end
+
+@interface SPTPlayerState
+@property (nonatomic, strong) SPTPlayerTrack *track;
 @end

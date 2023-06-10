@@ -12,17 +12,22 @@
 }
 
 %new
+- (void)loadImageForTrack:(SPTPlayerTrack *)track completion:(void (^)(UIImage *, NSError *))completion {
+    [self.imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *image, NSError *error) {
+        completion(image, error);
+    }];
+}
+%new
 - (void)sendTrackImage:(SPTPlayerTrack *)track {
-    [self.imageLoader loadImageForURL:track.imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *artwork, NSError *error) {
-        if (!artwork) return;
-        NSData *imageData = UIImagePNGRepresentation(artwork);
+    [self loadImageForTrack:track completion:^(UIImage *image, NSError *error){
+        if (!image) return;
+        NSData *imageData = UIImagePNGRepresentation(image);
         [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
     }];
 }
 
 %new
-- (void)sendUpdateMessage {
-    SPTPlayerTrack *track = [self currentTrack];
+- (void)sendUpdateWithTrack:(SPTPlayerTrack *)track {
     NSURL *originalURL = [NSURL URLWithString:track.metadata[@"canvas.url"]];
     if (!originalURL) {
         [self sendTrackImage:track];
@@ -33,14 +38,20 @@
     BOOL canvasStatic = [track.metadata[@"canvas.type"] isEqualToString:@"IMAGE"];
     if (canvasStatic) {
         NSData *imageData = [NSData dataWithContentsOfURL:URL];
-        [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
+        if (imageData) [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
+        else [self sendTrackImage:track];
     }
-    else [self.center callExternalVoidMethod:@selector(updateWithVideoURL:) withArguments:URL.absoluteString];
+    else {
+        [self loadImageForTrack:track completion:^(UIImage *image, NSError *error){
+            NSDictionary *userInfo = @{@"url": URL.absoluteString, @"fallback": UIImagePNGRepresentation(image)};
+            [self.center callExternalVoidMethod:@selector(updateWithVideoInfo:) withArguments:userInfo];
+        }];
+    }
 }
 
-- (void)player:(id)arg1 didMoveToRelativeTrack:(id)arg2 {
+- (void)playerDidReceiveStateUpdate:(SPTStatefulPlayerImplementation *)update {
     %orig;
-    [self sendUpdateMessage];
+    [self sendUpdateWithTrack:self.currentTrack];
 }
 
 - (void)playerDidUpdatePlaybackControls:(SPTStatefulPlayerImplementation *)arg1 {
@@ -48,10 +59,9 @@
     [self.center callExternalVoidMethod:@selector(setPlaying:) withArguments:@(!arg1.isPaused)];
 }
 
-- (id)initWithPlayer:(id)arg1 collectionPlatform:(id)arg2 playlistDataLoader:(id)arg3 radioPlaybackService:(id)arg4 adsManager:(id)arg5 productState:(id)arg6 queueService:(SPTQueueServiceImplementation *)queueService testManager:(id)arg8 collectionTestManager:(id)arg9 statefulPlayer:(id)arg10 yourEpisodesSaveManager:(id)arg11 educationEligibility:(id)arg12 reinventFreeConfiguration:(id)arg13 curationPlatform:(id)arg14 {
-    id<SPTGLUEImageLoaderFactory> factory = queueService.glueImageLoaderFactory;
+- (id)initWithPlayer:(id)arg1 collectionPlatform:(id)arg2 playlistDataLoader:(id)arg3 radioPlaybackService:(id)arg4 adsManager:(id)arg5 productState:(id)arg6 queueService:(SPTQueueServiceImplementation *)queueService  testManager:(id)arg8 collectionTestManager:(id)arg9 statefulPlayer:(id)arg10 yourEpisodesSaveManager:(id)arg11 educationEligibility:(id)arg12 reinventFreeConfiguration:(id)arg13 curationPlatform:(id)arg14 smartShuffleHandler:(id)arg15 {
     self.center = [%c(MRYIPCCenter) centerNamed:@"CanvasBackground.CanvasServer"];
-    self.imageLoader = [factory createImageLoaderForSourceIdentifier:@"com.popsicletreehouse.CanvasBackground"];
+    self.imageLoader = [queueService.glueImageLoaderFactory createImageLoaderForSourceIdentifier:@"com.popsicletreehouse.CanvasBackground"];
     return %orig;
 }
 %end

@@ -16,3 +16,7 @@
 @interface CSMainPageContentViewController : UIViewController
 @property (nonatomic, strong) CBViewController *canvasController;
 @end
+
+@interface CSEvent
+@property (nonatomic, assign) long long type;
+@end

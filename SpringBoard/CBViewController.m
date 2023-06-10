@@ -18,15 +18,48 @@
 
 - (void)invalidate {
     self.playing = NO;
-    [self.canvasPlayer removeAllItems];
-    self.thumbnailView.image = nil;
+    [self animateFade:NO completion:^{
+        [self.canvasPlayer removeAllItems];
+        self.thumbnailView.image = nil;
+    }];
+}
+
+- (void)animateFade:(BOOL)fadeIn completion:(void (^)(void))completion {
+    [CATransaction begin];
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
+    animation.duration = 0.25f;
+    if (fadeIn) {
+        animation.fromValue = @(0.0f);
+        animation.toValue = @(1.0f);
+        self.view.layer.opacity = 1;
+    }
+    else {
+        animation.fromValue = @(1.0f);
+        animation.toValue = @(0.0f);
+        self.view.layer.opacity = 0;
+    }
+    [CATransaction setCompletionBlock:^{
+        if (completion) completion();
+    }];
+    [self.view.layer addAnimation:animation forKey:nil];
+    [CATransaction commit];
 }
 
 - (void)setPlaying:(BOOL)playing {
+    if (playing == _playing) return;
     _playing = playing;
     if (self.view.hidden) return;
-    if (playing) [self.canvasPlayer play];
-    else [self.canvasPlayer pause];
+    if (playing) {
+        [self animateFade:YES completion:nil];
+        if (self.canvasPlayerLayer.readyForDisplay) [_canvasPlayer play];
+    }
+    else {
+        [self animateFade:NO completion:^{
+            if (self.canvasPlayerLayer.readyForDisplay) {
+                [_canvasPlayer pause];
+            }
+        }];
+    }
 }
 
 - (void)updateWithImage:(UIImage *)image {
@@ -34,22 +67,25 @@
     self.thumbnailView.image = image;
 }
 
-- (void)updateWithVideoURL:(NSURL *)URL {
-    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:URL options:nil];
-    AVPlayerItem *currentItem = [AVPlayerItem playerItemWithAsset:asset];
-    self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:currentItem];
-    [self.canvasPlayer play];
-    AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
-    UIImage *image = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
-    self.thumbnailView.image = image;
+- (void)updateWithVideoItem:(AVPlayerItem *)item {
+    [self.canvasPlayer removeAllItems];
+    NSLog(@"canvasbackground %lu", (unsigned long)[self.canvasPlayer.items count]);
+    self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:item];
+    AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:[item asset]];
+    [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:CMTimeMakeWithSeconds(0, 1)]] completionHandler:^(CMTime requestedTime, CGImageRef im, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error){
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            UIImage *image = [UIImage imageWithCGImage:im];
+            self.thumbnailView.image = image;
+        });
+    }];
 }
 
 - (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     self.thumbnailView.hidden = self.canvasPlayerLayer.readyForDisplay;
 }
 
-- (void)setVisible:(BOOL)visible {
-    if (!visible) [self.canvasPlayer pause];
+- (void)setSuspended:(BOOL)suspended {
+    if (suspended) [self.canvasPlayer pause];
     else if (self.playing) [self.canvasPlayer play];
 }
 
@@ -65,6 +101,7 @@
 	self.canvasPlayerLayer.frame = self.view.bounds;
     self.view.clipsToBounds = YES;
     self.view.contentMode = UIViewContentModeScaleAspectFill;
+    self.view.layer.opacity = 0.0f;
 	[self.view insertSubview:self.thumbnailView atIndex:0];
 	[self.view.layer insertSublayer:self.canvasPlayerLayer atIndex:0];
     [self.canvasPlayerLayer addObserver:self forKeyPath:@"readyForDisplay" options:0 context:nil];
@@ -73,12 +110,12 @@
 
 - (void)viewDidDisappear:(BOOL)animated {
 	[super viewDidDisappear:animated];
-    [self setVisible:NO];
+    [self setSuspended:YES];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
-    [self setVisible:YES];
+    [self setSuspended:NO];
 }
 
 - (BOOL)_canShowWhileLocked {

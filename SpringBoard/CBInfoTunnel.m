@@ -1,4 +1,5 @@
 #import "CBInfoTunnel.h"
+#import <AVKit/AVKit.h>
 #import <MRYIPCCenter.h>
 
 @interface CBInfoTunnel ()
@@ -17,7 +18,7 @@ static CBInfoTunnel *tunnel;
     if (self = [super init]) {
         self.observers = [NSMutableSet set];
         self.center = [NSClassFromString(@"MRYIPCCenter") centerNamed:@"CanvasBackground.CanvasServer"];
-        [self.center addTarget:self action:@selector(updateWithVideoURL:)];
+        [self.center addTarget:self action:@selector(updateWithVideoInfo:)];
         [self.center addTarget:self action:@selector(updateWithImageData:)];
         [self.center addTarget:self action:@selector(setPlaying:)];
     }
@@ -46,19 +47,24 @@ static CBInfoTunnel *tunnel;
     [self executeBlock:block];
 }
 
-- (void)updateWithVideoURL:(NSString *)URLString {
+- (void)updateWithVideoInfo:(NSDictionary *)info {
+    NSURL *URL = [NSURL URLWithString:info[@"url"]];
+    NSData *imageData = info[@"fallback"];
+    AVURLAsset *asset = [AVURLAsset assetWithURL:URL];
+    AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
+    UIImage *fallbackImage = [UIImage imageWithData:imageData];
     void (^block)(void) = ^{
-        NSURL *URL = [NSURL URLWithString:URLString];
         for (id<CBCanvasObserver> observer in self.observers) {
-            [observer updateWithVideoURL:URL];
+            if (item) [observer updateWithVideoItem:item];
+            else [observer updateWithImage:fallbackImage];
         }
     };
     [self executeBlock:block];
 }
 
 - (void)updateWithImageData:(NSData *)data {
+    UIImage *image = [UIImage imageWithData:data];
     void (^block)(void) = ^{
-        UIImage *image = [UIImage imageWithData:data];
         for (id<CBCanvasObserver> observer in self.observers) {
             [observer updateWithImage:image];
         }
@@ -67,8 +73,8 @@ static CBInfoTunnel *tunnel;
 }
 
 - (void)setPlaying:(NSNumber *)number {
+    BOOL playing = [number boolValue];
     void (^block)(void) = ^{
-        BOOL playing = [number boolValue];
         for (id<CBCanvasObserver> observer in self.observers) {
             [observer setPlaying:playing];
         }

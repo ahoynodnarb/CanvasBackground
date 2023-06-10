@@ -7,8 +7,8 @@
 @property (nonatomic, assign) BOOL playing;
 @property (nonatomic, weak) CBInfoTunnel *server;
 - (instancetype)initWithCanvasServer:(CBInfoTunnel *)server;
-- (void)setVisible:(BOOL)visible;
+- (void)setSuspended:(BOOL)suspended;
 - (void)updateWithImage:(UIImage *)image;
-- (void)updateWithVideoURL:(NSURL *)URL;
+- (void)updateWithVideoItem:(AVPlayerItem *)item;
 - (void)invalidate;
 @end
