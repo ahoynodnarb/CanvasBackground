@@ -2,6 +2,7 @@
 #import <MRYIPCCenter.h>
 
 @interface SPTPlayerTrack : NSObject
+@property (nonatomic, strong) NSURL *URI;
 @property (copy, nonatomic) NSDictionary *metadata;
 @property (readonly, nonatomic) NSURL *imageURL;
 @end
@@ -34,4 +35,8 @@
 
 @interface SPTPlayerState
 @property (nonatomic, strong) SPTPlayerTrack *track;
+@end
+
+@interface SPTStatefulPlayerQueue
+@property (nonatomic, strong) SPTPlayerTrack *currentTrack;
 @end

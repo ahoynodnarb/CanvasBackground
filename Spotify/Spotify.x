@@ -1,5 +1,7 @@
 #import "Spotify.h"
 
+SPTPlayerTrack *previousTrack;
+
 %hook SPTNowPlayingModel
 %property (nonatomic, strong) MRYIPCCenter *center;
 %property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
@@ -49,7 +51,7 @@
     }
 }
 
-- (void)playerDidReceiveStateUpdate:(SPTStatefulPlayerImplementation *)update {
+- (void)player:(id)player didMoveToRelativeTrack:(id)track {
     %orig;
     [self sendUpdateWithTrack:self.currentTrack];
 }

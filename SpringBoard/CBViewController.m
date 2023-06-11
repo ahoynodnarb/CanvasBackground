@@ -69,7 +69,6 @@
 
 - (void)updateWithVideoItem:(AVPlayerItem *)item {
     [self.canvasPlayer removeAllItems];
-    NSLog(@"canvasbackground %lu", (unsigned long)[self.canvasPlayer.items count]);
     self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:item];
     AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:[item asset]];
     [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:CMTimeMakeWithSeconds(0, 1)]] completionHandler:^(CMTime requestedTime, CGImageRef im, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error){
