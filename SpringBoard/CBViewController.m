@@ -17,8 +17,34 @@
 }
 
 - (void)invalidate {
-    self.playing = NO;
-    [self updateWithImage:nil];
+    _playing = NO;
+    [self animateFade:NO completion:^{
+        [self.canvasPlayer removeAllItems];
+        self.thumbnailView.image = nil;
+    }];
+}
+
+- (void)animateFade:(BOOL)fadeIn completion:(void (^)(void))completion {
+    [CATransaction begin];
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
+    CGFloat currentOpacity = self.view.layer.opacity;
+    animation.duration = 0.25f;
+    animation.fromValue = @(currentOpacity);
+    if (fadeIn) {
+        if (currentOpacity == 1.0f) return;
+        animation.toValue = @(1.0f);
+        self.view.layer.opacity = 1;
+    }
+    else if (currentOpacity) {
+        if (currentOpacity == 0.0f) return;
+        animation.toValue = @(0.0f);
+        self.view.layer.opacity = 0;
+    }
+    [CATransaction setCompletionBlock:^{
+        if (completion) completion();
+    }];
+    [self.view.layer addAnimation:animation forKey:nil];
+    [CATransaction commit];
 }
 
 - (void)setPlaying:(BOOL)playing {
@@ -49,10 +75,15 @@
 
 - (void)viewDidLoad {
 	[super viewDidLoad];
+    NSError *e1;
+    NSError *e2;
+	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient withOptions:AVAudioSessionCategoryOptionMixWithOthers error:&e1];
+    [[AVAudioSession sharedInstance] setActive:YES error:&e2];
 	self.thumbnailView = [[UIImageView alloc] initWithFrame:self.view.frame];
 	self.thumbnailView.contentMode = UIViewContentModeScaleAspectFill;
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
-	self.canvasPlayer.volume = 0;
+    self.canvasPlayer.muted = YES;
+	// self.canvasPlayer.volume = 0;
 	self.canvasPlayer.preventsDisplaySleepDuringVideoPlayback = NO;
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
 	self.canvasPlayerLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
@@ -62,7 +93,7 @@
 	[self.view insertSubview:self.thumbnailView atIndex:0];
 	[self.view.layer insertSublayer:self.canvasPlayerLayer atIndex:0];
     [self.canvasPlayerLayer addObserver:self forKeyPath:@"readyForDisplay" options:0 context:nil];
-	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+    NSLog(@"canvasBackground %@ %@", e1, e2);
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
