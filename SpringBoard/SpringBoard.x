@@ -3,11 +3,7 @@
 %hook SBMediaController
 - (void)_setNowPlayingApplication:(SBApplication *)application {
 	%orig;
-<<<<<<< HEAD
 	if (application && ![application.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[CBInfoTunnel sharedTunnel] invalidate];
-=======
-	if (![application.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[CBInfoTunnel sharedTunnel] invalidate];
->>>>>>> 43925e42021a369867eca44cae74def1d272e228
 }
 %end
 

@@ -17,11 +17,7 @@
 }
 
 - (void)invalidate {
-<<<<<<< HEAD
     _playing = NO;
-=======
-    self.playing = NO;
->>>>>>> 43925e42021a369867eca44cae74def1d272e228
     [self animateFade:NO completion:^{
         [self.canvasPlayer removeAllItems];
         self.thumbnailView.image = nil;
@@ -31,7 +27,6 @@
 - (void)animateFade:(BOOL)fadeIn completion:(void (^)(void))completion {
     [CATransaction begin];
     CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
-<<<<<<< HEAD
     CGFloat currentOpacity = self.view.layer.opacity;
     animation.duration = 0.25f;
     animation.fromValue = @(currentOpacity);
@@ -42,16 +37,6 @@
     }
     else if (currentOpacity) {
         if (currentOpacity == 0.0f) return;
-=======
-    animation.duration = 0.25f;
-    if (fadeIn) {
-        animation.fromValue = @(0.0f);
-        animation.toValue = @(1.0f);
-        self.view.layer.opacity = 1;
-    }
-    else {
-        animation.fromValue = @(1.0f);
->>>>>>> 43925e42021a369867eca44cae74def1d272e228
         animation.toValue = @(0.0f);
         self.view.layer.opacity = 0;
     }
