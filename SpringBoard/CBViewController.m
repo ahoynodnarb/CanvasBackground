@@ -72,6 +72,7 @@
 - (void)updateWithVideoItem:(AVPlayerItem *)item {
     [self.canvasPlayer removeAllItems];
     self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:item];
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
     AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:[item asset]];
     [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:CMTimeMakeWithSeconds(0, 1)]] completionHandler:^(CMTime requestedTime, CGImageRef im, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error){
         dispatch_sync(dispatch_get_main_queue(), ^{
@@ -92,15 +93,10 @@
 
 - (void)viewDidLoad {
 	[super viewDidLoad];
-    NSError *e1;
-    NSError *e2;
-	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient withOptions:AVAudioSessionCategoryOptionMixWithOthers error:&e1];
-    [[AVAudioSession sharedInstance] setActive:YES error:&e2];
 	self.thumbnailView = [[UIImageView alloc] initWithFrame:self.view.frame];
 	self.thumbnailView.contentMode = UIViewContentModeScaleAspectFill;
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
     self.canvasPlayer.muted = YES;
-	// self.canvasPlayer.volume = 0;
 	self.canvasPlayer.preventsDisplaySleepDuringVideoPlayback = NO;
 	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
 	self.canvasPlayerLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
@@ -111,7 +107,6 @@
 	[self.view insertSubview:self.thumbnailView atIndex:0];
 	[self.view.layer insertSublayer:self.canvasPlayerLayer atIndex:0];
     [self.canvasPlayerLayer addObserver:self forKeyPath:@"readyForDisplay" options:0 context:nil];
-    NSLog(@"canvasBackground %@ %@", e1, e2);
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
