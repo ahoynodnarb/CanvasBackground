@@ -4,7 +4,7 @@ SPTPlayerTrack *previousTrack;
 
 %hook SPTNowPlayingModel
 %property (nonatomic, strong) MRYIPCCenter *center;
-%property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
+// %property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
 %new
 + (NSURL *)localURLForCanvas:(NSURL *)canvasURL {
     NSString *libraryPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
@@ -19,6 +19,7 @@ SPTPlayerTrack *previousTrack;
         completion(image, error);
     }];
 }
+
 %new
 - (void)sendTrackImage:(SPTPlayerTrack *)track {
     [self loadImageForTrack:track completion:^(UIImage *image, NSError *error){
@@ -29,7 +30,7 @@ SPTPlayerTrack *previousTrack;
 }
 
 %new
-- (void)sendUpdateWithTrack:(SPTPlayerTrack *)track {
+- (NSDictionary *)requestCanvasInfo {
     NSURL *originalURL = [NSURL URLWithString:track.metadata[@"canvas.url"]];
     if (!originalURL) {
         [self sendTrackImage:track];
@@ -51,19 +52,38 @@ SPTPlayerTrack *previousTrack;
     }
 }
 
-- (void)player:(id)player didMoveToRelativeTrack:(id)track {
-    %orig;
-    [self sendUpdateWithTrack:self.currentTrack];
-}
+// - (void)player:(id)player didMoveToRelativeTrack:(id)track {
+//     %orig;
+//     [self sendUpdateWithTrack:self.currentTrack];
+// }
 
-- (void)playerDidUpdatePlaybackControls:(SPTStatefulPlayerImplementation *)arg1 {
-    %orig;
-    [self.center callExternalVoidMethod:@selector(setPlaying:) withArguments:@(!arg1.isPaused)];
-}
+// - (void)playerDidUpdatePlaybackControls:(SPTStatefulPlayerImplementation *)arg1 {
+//     %orig;
+//     [self.center callExternalVoidMethod:@selector(setPlaying:) withArguments:@(!arg1.isPaused)];
+// }
+
+// %new
+// - (NSDictionary *)requestCanvasInfo {
+//     NSURL *originalURL = [NSURL URLWithString:self.currentTrack.metadata[@"canvas.url"]];
+//     if (!originalURL) {
+//         return @{};
+//     }
+//     NSURL *fileURL = [%c(SPTNowPlayingModel) localURLForCanvas:originalURL];
+//     NSURL *URL = [[NSFileManager defaultManager] fileExistsAtPath:fileURL.path] ? fileURL : originalURL;
+//     BOOL canvasStatic = [self.currentTrack.metadata[@"canvas.type"] isEqualToString:@"IMAGE"];
+//     if (canvasStatic) {
+//         NSData *imageData = [NSData dataWithContentsOfURL:URL];
+//         if (imageData) {
+//             return @{@"canvas-image-data": imageData};
+//         }
+//         return @{};
+//     }
+//     return @{@"canvas-url": URL.absoluteString};
+// }
 
 - (id)initWithPlayer:(id)arg1 collectionPlatform:(id)arg2 playlistDataLoader:(id)arg3 radioPlaybackService:(id)arg4 adsManager:(id)arg5 productState:(id)arg6 queueService:(SPTQueueServiceImplementation *)queueService  testManager:(id)arg8 collectionTestManager:(id)arg9 statefulPlayer:(id)arg10 yourEpisodesSaveManager:(id)arg11 educationEligibility:(id)arg12 reinventFreeConfiguration:(id)arg13 curationPlatform:(id)arg14 smartShuffleHandler:(id)arg15 {
     self.center = [%c(MRYIPCCenter) centerNamed:@"CanvasBackground.CanvasServer"];
-    self.imageLoader = [queueService.glueImageLoaderFactory createImageLoaderForSourceIdentifier:@"com.popsicletreehouse.CanvasBackground"];
+    [self.center addTarget:self action:@selector(requestCanvasInfo)];
     return %orig;
 }
 %end

@@ -1,6 +1,7 @@
 #import "CBInfoTunnel.h"
 #import <AVKit/AVKit.h>
 #import <MRYIPCCenter.h>
+// #import <rocketbootstrap/rocketbootstrap.h>
 
 @interface CBInfoTunnel ()
 @property (nonatomic, strong) MRYIPCCenter *center;
@@ -18,9 +19,6 @@ static CBInfoTunnel *tunnel;
     if (self = [super init]) {
         self.observers = [NSMutableSet set];
         self.center = [NSClassFromString(@"MRYIPCCenter") centerNamed:@"CanvasBackground.CanvasServer"];
-        [self.center addTarget:self action:@selector(updateWithVideoInfo:)];
-        [self.center addTarget:self action:@selector(updateWithImageData:)];
-        [self.center addTarget:self action:@selector(setPlaying:)];
     }
     return self;
 }
@@ -47,38 +45,43 @@ static CBInfoTunnel *tunnel;
     [self executeBlock:block];
 }
 
-- (void)updateWithVideoInfo:(NSDictionary *)info {
-    NSURL *URL = [NSURL URLWithString:info[@"url"]];
-    NSData *imageData = info[@"fallback"];
+- (BOOL)updateCanvas {
+    NSDictionary *info = [self.center callExternalMethod:@selector(requestCanvasInfo) withArguments:nil];
+    if (!info) {
+        return NO;
+    }
+    NSURL *URL = [NSURL URLWithString:info[@"canvas-url"]];
+    if (!URL) {
+        NSData *imageData = info[@"canvas-image-data"];
+        if (!imageData) {
+            return NO;
+        }
+        [self updateWithImage:[UIImage imageWithData:imageData]];
+        return YES;
+    }
     AVURLAsset *asset = [AVURLAsset assetWithURL:URL];
     AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
-    UIImage *fallbackImage = [UIImage imageWithData:imageData];
-    void (^block)(void) = ^{
+    [self executeBlock:^{
         for (id<CBCanvasObserver> observer in self.observers) {
-            if (item) [observer updateWithVideoItem:item];
-            else [observer updateWithImage:fallbackImage];
+            [observer updateWithVideoItem:item];
         }
-    };
-    [self executeBlock:block];
+    }];
+    return YES;
 }
 
-- (void)updateWithImageData:(NSData *)data {
-    UIImage *image = [UIImage imageWithData:data];
-    void (^block)(void) = ^{
+- (void)updateWithImage:(UIImage *)image {
+    [self executeBlock:^{
         for (id<CBCanvasObserver> observer in self.observers) {
             [observer updateWithImage:image];
         }
-    };
-    [self executeBlock:block];
+    }];
 }
 
-- (void)setPlaying:(NSNumber *)number {
-    BOOL playing = [number boolValue];
-    void (^block)(void) = ^{
+- (void)setPlaying:(BOOL)playing {
+    [self executeBlock:^{
         for (id<CBCanvasObserver> observer in self.observers) {
             [observer setPlaying:playing];
         }
-    };
-    [self executeBlock:block];
+    }];
 }
 @end

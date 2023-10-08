@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+// #import <rocketbootstrap/rocketbootstrap.h>
 #import <MRYIPCCenter.h>
 
 @interface SPTPlayerTrack : NSObject
@@ -28,9 +29,10 @@
 @property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
 @property (nonatomic, strong) SPTPlayerTrack *currentTrack;
 + (NSURL *)localURLForCanvas:(NSURL *)canvasURL;
+- (NSDictionary *)requestCanvasInfo;
 - (void)loadImageForTrack:(SPTPlayerTrack *)track completion:(void (^)(UIImage *, NSError *))completion;
 - (void)sendTrackImage:(SPTPlayerTrack *)track;
-- (void)sendUpdateWithTrack:(SPTPlayerTrack *)track;
+// - (void)sendUpdateWithTrack:(SPTPlayerTrack *)track;
 @end
 
 @interface SPTPlayerState

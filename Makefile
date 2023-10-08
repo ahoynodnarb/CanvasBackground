@@ -9,5 +9,6 @@ TWEAK_NAME = CanvasBackground
 $(TWEAK_NAME)_FILES = $(wildcard */*.m) $(wildcard */*.x)
 $(TWEAK_NAME)_CFLAGS = -fobjc-arc
 $(TWEAK_NAME)_LIBRARIES = mryipc
+# $(TWEAK_NAME)_PRIVATE_FRAMEWORKS = AppSupport
 
 include $(THEOS_MAKE_PATH)/tweak.mk

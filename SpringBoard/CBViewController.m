@@ -4,7 +4,7 @@
 @property (nonatomic, strong) AVQueuePlayer *canvasPlayer;
 @property (nonatomic, strong) AVPlayerLayer *canvasPlayerLayer;
 @property (nonatomic, strong) AVPlayerLooper *canvasPlayerLooper;
-@property (nonatomic, strong) UIImageView *thumbnailView;
+@property (nonatomic, strong) UIImageView *canvasImageView;
 @end
 
 @implementation CBViewController
@@ -20,7 +20,7 @@
     _playing = NO;
     [self animateFade:NO completion:^{
         [self.canvasPlayer removeAllItems];
-        self.thumbnailView.image = nil;
+        self.canvasImageView.image = nil;
     }];
 }
 
@@ -66,7 +66,7 @@
 
 - (void)updateWithImage:(UIImage *)image {
     [self.canvasPlayer removeAllItems];
-    self.thumbnailView.image = image;
+    self.canvasImageView.image = image;
 }
 
 - (void)updateWithVideoItem:(AVPlayerItem *)item {
@@ -77,13 +77,13 @@
     [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:CMTimeMakeWithSeconds(0, 1)]] completionHandler:^(CMTime requestedTime, CGImageRef im, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error){
         dispatch_sync(dispatch_get_main_queue(), ^{
             UIImage *image = [UIImage imageWithCGImage:im];
-            self.thumbnailView.image = image;
+            self.canvasImageView.image = image;
         });
     }];
 }
 
 - (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    self.thumbnailView.hidden = self.canvasPlayerLayer.readyForDisplay;
+    self.canvasImageView.hidden = self.canvasPlayerLayer.readyForDisplay;
 }
 
 - (void)setSuspended:(BOOL)suspended {
@@ -93,8 +93,8 @@
 
 - (void)viewDidLoad {
 	[super viewDidLoad];
-	self.thumbnailView = [[UIImageView alloc] initWithFrame:self.view.frame];
-	self.thumbnailView.contentMode = UIViewContentModeScaleAspectFill;
+	self.canvasImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
+	self.canvasImageView.contentMode = UIViewContentModeScaleAspectFill;
 	self.canvasPlayer = [[AVQueuePlayer alloc] init];
     self.canvasPlayer.muted = YES;
 	self.canvasPlayer.preventsDisplaySleepDuringVideoPlayback = NO;
@@ -104,7 +104,7 @@
     self.view.clipsToBounds = YES;
     self.view.contentMode = UIViewContentModeScaleAspectFill;
     self.view.layer.opacity = 0.0f;
-	[self.view insertSubview:self.thumbnailView atIndex:0];
+	[self.view insertSubview:self.canvasImageView atIndex:0];
 	[self.view.layer insertSublayer:self.canvasPlayerLayer atIndex:0];
     [self.canvasPlayerLayer addObserver:self forKeyPath:@"readyForDisplay" options:0 context:nil];
 }

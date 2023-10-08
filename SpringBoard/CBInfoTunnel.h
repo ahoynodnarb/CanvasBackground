@@ -9,7 +9,7 @@
 - (void)addObserver:(id<CBCanvasObserver>)observer;
 - (void)removeObserver:(id<CBCanvasObserver>)observer;
 - (void)invalidate;
-- (void)updateWithVideoInfo:(NSDictionary *)info;
-- (void)updateWithImageData:(NSData *)data;
-- (void)setPlaying:(NSNumber *)number;
+- (BOOL)updateCanvas;
+- (void)updateWithImage:(UIImage *)image;
+- (void)setPlaying:(BOOL)playing;
 @end
