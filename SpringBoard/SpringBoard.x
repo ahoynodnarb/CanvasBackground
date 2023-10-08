@@ -22,20 +22,17 @@
 }
 %end
 
-%hook CSMainPageContentViewController
+%hook SBCoverSheetPrimarySlidingViewController
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
 	%orig;
 	self.canvasController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBInfoTunnel sharedTunnel]];
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
-    [self.view insertSubview:self.canvasController.view atIndex:0];
+    [self.panelBackgroundContainerView addSubview:self.canvasController.view];
     [self addChildViewController:self.canvasController];
+
 }
-- (BOOL)handleEvent:(CSEvent *)event {
-    if (event.type == 24) [self.canvasController setSuspended:YES];
-    if (event.type == 23) [self.canvasController setSuspended:NO];
-    return %orig;
-}
+
 %end
 
 %hook FBProcessManager

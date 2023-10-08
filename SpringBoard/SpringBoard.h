@@ -13,10 +13,11 @@
 @property (nonatomic, strong) CBViewController *canvasController;
 @end
 
-@interface CSMainPageContentViewController : UIViewController
-@property (nonatomic, strong) CBViewController *canvasController;
+@interface CSCoverSheetView : UIView
+@property (nonatomic, strong) UIView *slideableContentView;
 @end
 
-@interface CSEvent
-@property (nonatomic, assign) long long type;
+@interface SBCoverSheetPrimarySlidingViewController : UIViewController
+@property (nonatomic, strong) CBViewController *canvasController;
+@property (nonatomic, strong) UIView *panelBackgroundContainerView;
 @end

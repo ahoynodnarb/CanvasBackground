@@ -111,11 +111,13 @@
 
 - (void)viewDidDisappear:(BOOL)animated {
 	[super viewDidDisappear:animated];
+    NSLog(@"canvasBackground %@", NSStringFromSelector(_cmd));
     [self setSuspended:YES];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
+    NSLog(@"canvasBackground %@", NSStringFromSelector(_cmd));
     [self setSuspended:NO];
 }
 
