@@ -13,6 +13,7 @@
 	%orig;
 	self.canvasController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBInfoTunnel sharedTunnel]];
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
+    self.canvasController.view.opaque = NO;
     [self.view insertSubview:self.canvasController.view atIndex:0];
     [self addChildViewController:self.canvasController];
 }
@@ -22,6 +23,7 @@
 }
 %end
 
+
 %hook SBCoverSheetPrimarySlidingViewController
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
@@ -30,9 +32,29 @@
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
     [self.panelBackgroundContainerView addSubview:self.canvasController.view];
     [self addChildViewController:self.canvasController];
-
 }
 
+- (void)_beginTransitionFromAppeared:(BOOL)arg1 {
+    self.contentViewController.canvasController.view.hidden = YES;
+    %orig;
+}
+
+- (void)_endTransitionToAppeared:(BOOL)arg1 {
+    %orig;
+    self.contentViewController.canvasController.view.hidden = NO;
+}
+
+%end
+
+%hook CSCoverSheetViewController
+%property (nonatomic, strong) CBViewController *canvasController;
+- (void)viewDidLoad {
+	%orig;
+	self.canvasController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBInfoTunnel sharedTunnel]];
+    self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
+    [self.view.slideableContentView addSubview:self.canvasController.view];
+    [self addChildViewController:self.canvasController];
+}
 %end
 
 %hook FBProcessManager

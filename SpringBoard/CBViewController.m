@@ -80,6 +80,7 @@
             self.thumbnailView.image = image;
         });
     }];
+    [self.canvasPlayer play];
 }
 
 - (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
@@ -111,13 +112,11 @@
 
 - (void)viewDidDisappear:(BOOL)animated {
 	[super viewDidDisappear:animated];
-    NSLog(@"canvasBackground %@", NSStringFromSelector(_cmd));
     [self setSuspended:YES];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
-    NSLog(@"canvasBackground %@", NSStringFromSelector(_cmd));
     [self setSuspended:NO];
 }
 
