@@ -60,10 +60,43 @@ SPTPlayerTrack *previousTrack;
     %orig;
     [self.center callExternalVoidMethod:@selector(setPlaying:) withArguments:@(!arg1.isPaused)];
 }
-
-- (id)initWithPlayer:(id)arg1 collectionPlatform:(id)arg2 playlistDataLoader:(id)arg3 radioPlaybackService:(id)arg4 adsManager:(id)arg5 productState:(id)arg6 queueService:(SPTQueueServiceImplementation *)queueService  testManager:(id)arg8 collectionTestManager:(id)arg9 statefulPlayer:(id)arg10 yourEpisodesSaveManager:(id)arg11 educationEligibility:(id)arg12 reinventFreeConfiguration:(id)arg13 curationPlatform:(id)arg14 smartShuffleHandler:(id)arg15 {
+- (id)initWithPlayer:(id)arg0 collectionPlatform:(id)arg1 playlistDataLoader:(id)arg2 radioPlaybackService:(id)arg3 adsManager:(id)arg4 productState:(id)arg5 testManager:(id)arg6 collectionTestManager:(id)arg7 statefulPlayer:(id)arg8 yourEpisodesSaveManager:(id)arg9 educationEligibility:(id)arg10 reinventFreeConfiguration:(id)arg11 curationPlatform:(id)arg12 smartShuffleHandler:(id)arg13 {
     self.center = [%c(MRYIPCCenter) centerNamed:@"CanvasBackground.CanvasServer"];
-    self.imageLoader = [queueService.glueImageLoaderFactory createImageLoaderForSourceIdentifier:@"com.popsicletreehouse.CanvasBackground"];
+    self.imageLoader = [[GLUEService provideImageLoaderFactory] createImageLoaderForSourceIdentifier:@"com.popsicletreehouse.CanvasBackground"];
     return %orig;
 }
+%end
+
+// %hook SPTImageLoaderService
+// - (id)createImageLoaderFactory:(id)arg0 username:(id)arg1 {
+//     NSLog(@"canvasBackground %@ %@ %@", NSStringFromSelector(_cmd), arg0, arg1);
+//     return %orig;
+// }
+// %end
+
+%hook SPTGLUEServiceImplementation
+// -(void)_injectDependenciesWithProvider:(id)arg0 {
+//     %orig;
+//     NSLog(@"canvasBackground %@ %@", NSStringFromSelector(_cmd), [self provideImageLoaderFactory]);
+// }
+// -(id)imageLoadingService_propertyWrapper {
+//     NSLog(@"canvasBackground %@ %@", NSStringFromSelector(_cmd), [self provideImageLoaderFactory]);
+//     return %orig;
+// }
+// -(id)imageLoadingService {
+//     NSLog(@"canvasBackground %@ %@", NSStringFromSelector(_cmd), [self provideImageLoaderFactory]);
+//     return %orig;
+// }
+-(void)load {
+    %orig;
+    GLUEService = self;
+}
+// -(void)loadStyling {
+//     %orig;
+//     NSLog(@"canvasBackground %@ %@", NSStringFromSelector(_cmd), [self provideImageLoaderFactory]);
+// }
+// - (id)init {
+//     NSLog(@"canvasBackground %@ %@", NSStringFromSelector(_cmd), [self provideImageLoaderFactory]);
+//     return %orig;
+// }
 %end
