@@ -76,27 +76,9 @@
 }
 
 - (void)updateWithImage:(UIImage *)image {
-<<<<<<< Updated upstream
-    [self.canvasPlayer removeAllItems];
-    self.canvasImageView.image = image;
-}
-
-- (void)updateWithVideoItem:(AVPlayerItem *)item {
-    [self.canvasPlayer removeAllItems];
-    self.canvasPlayerLooper = [AVPlayerLooper playerLooperWithPlayer:self.canvasPlayer templateItem:item];
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
-    AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:[item asset]];
-    [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:CMTimeMakeWithSeconds(0, 1)]] completionHandler:^(CMTime requestedTime, CGImageRef im, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error){
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            UIImage *image = [UIImage imageWithCGImage:im];
-            self.canvasImageView.image = image;
-        });
-    }];
-=======
     dispatch_async(dispatch_get_main_queue(), ^{
         self.canvasImageView.image = image;
     });
->>>>>>> Stashed changes
 }
 
 - (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
@@ -143,32 +125,6 @@
 	[super viewDidLoad];
 	self.canvasImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
 	self.canvasImageView.contentMode = UIViewContentModeScaleAspectFill;
-<<<<<<< Updated upstream
-	self.canvasPlayer = [[AVQueuePlayer alloc] init];
-    self.canvasPlayer.muted = YES;
-	self.canvasPlayer.preventsDisplaySleepDuringVideoPlayback = NO;
-	self.canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.canvasPlayer];
-	self.canvasPlayerLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-	self.canvasPlayerLayer.frame = self.view.bounds;
-    self.view.clipsToBounds = YES;
-    self.view.contentMode = UIViewContentModeScaleAspectFill;
-    self.view.layer.opacity = 0.0f;
-	[self.view insertSubview:self.canvasImageView atIndex:0];
-	[self.view.layer insertSublayer:self.canvasPlayerLayer atIndex:0];
-    [self.canvasPlayerLayer addObserver:self forKeyPath:@"readyForDisplay" options:0 context:nil];
-}
-
-- (void)viewDidDisappear:(BOOL)animated {
-	[super viewDidDisappear:animated];
-    [self setSuspended:YES];
-}
-
-- (void)viewWillAppear:(BOOL)animated {
-	[super viewWillAppear:animated];
-    [self setSuspended:NO];
-}
-
-=======
 	[self.view addSubview:self.canvasImageView];
 	canvasPlayer = [self.infoTunnel player];
 	canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:canvasPlayer];
@@ -183,7 +139,6 @@
     canvasPlayerLayer.frame = self.view.bounds;
 }
 
->>>>>>> Stashed changes
 - (BOOL)_canShowWhileLocked {
     return YES;
 }

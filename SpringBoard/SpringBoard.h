@@ -17,10 +17,6 @@
 @property (nonatomic, strong) CBViewController *canvasController;
 @end
 
-<<<<<<< Updated upstream
-@interface CSEvent
-@property (nonatomic, assign) long long type;
-=======
 @interface CSCoverSheetViewController : UIViewController
 @property (nonatomic, strong) CBViewController *canvasController;
 @property (nonatomic, strong) CSCoverSheetView *view;
@@ -38,5 +34,4 @@
 
 @interface CSEvent
 @property (nonatomic, assign) unsigned long long type;
->>>>>>> Stashed changes
 @end

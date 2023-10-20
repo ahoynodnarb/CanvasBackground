@@ -18,11 +18,7 @@
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
 	%orig;
-<<<<<<< Updated upstream
-	self.canvasController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBInfoTunnel sharedTunnel]];
-=======
 	self.canvasController = [[%c(CBViewController) alloc] initWithInfoTunnel:[%c(CBInfoTunnel) sharedTunnel]];
->>>>>>> Stashed changes
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
     [self.view insertSubview:self.canvasController.view atIndex:0];
     [self addChildViewController:self.canvasController];
@@ -38,21 +34,11 @@
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
 	%orig;
-<<<<<<< Updated upstream
-	self.canvasController = [[%c(CBViewController) alloc] initWithCanvasServer:[CBInfoTunnel sharedTunnel]];
-=======
 	self.canvasController = [[%c(CBViewController) alloc] initWithInfoTunnel:[%c(CBInfoTunnel) sharedTunnel]];
->>>>>>> Stashed changes
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
     [self.view insertSubview:self.canvasController.view atIndex:0];
     [self addChildViewController:self.canvasController];
 }
-<<<<<<< Updated upstream
-- (BOOL)handleEvent:(CSEvent *)event {
-    if (event.type == 24) [self.canvasController setSuspended:YES];
-    if (event.type == 23) [self.canvasController setSuspended:NO];
-    return %orig;
-=======
 
 - (void)_beginTransitionFromAppeared:(BOOL)appeared {
     %orig;
@@ -89,7 +75,6 @@
         [self.canvasController.view.leftAnchor constraintEqualToAnchor:self.view.slideableContentView.leftAnchor],
         [self.canvasController.view.rightAnchor constraintEqualToAnchor:self.view.slideableContentView.rightAnchor],
     ]];
->>>>>>> Stashed changes
 }
 
 %end
@@ -97,12 +82,8 @@
 %hook SBBacklightController
 - (void)setBacklightFactorPending:(float)backlightFactor  {
     %orig;
-<<<<<<< Updated upstream
-    if ([process.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[CBInfoTunnel sharedTunnel] invalidate];
-=======
     BOOL screenOff = backlightFactor == 0.0f;
     [[CBInfoTunnel sharedTunnel] setSuspended:screenOff];
->>>>>>> Stashed changes
 }
 %end
 

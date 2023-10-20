@@ -11,15 +11,9 @@
 - (void)addObserver:(NSObject<CBCanvasObserver> *)observer;
 - (void)removeObserver:(NSObject<CBCanvasObserver> *)observer;
 - (void)invalidate;
-<<<<<<< Updated upstream
-- (BOOL)updateCanvas;
-- (void)updateWithImage:(UIImage *)image;
-- (void)setPlaying:(BOOL)playing;
-=======
 - (void)updateWithVideoInfo:(NSDictionary *)info;
 - (void)updateWithImageData:(NSData *)data;
 - (void)setPlaying:(NSNumber *)number;
 - (void)setSuspended:(BOOL)suspended;
 - (void)observerChangedSuspension:(NSObject<CBCanvasObserver> *)observer;
->>>>>>> Stashed changes
 @end
