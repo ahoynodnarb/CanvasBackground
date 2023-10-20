@@ -4,11 +4,10 @@
 #import "CBCanvasObserver.h"
 
 @interface CBViewController : UIViewController <CBCanvasObserver>
-@property (nonatomic, assign) BOOL playing;
-@property (nonatomic, weak) CBInfoTunnel *server;
-- (instancetype)initWithCanvasServer:(CBInfoTunnel *)server;
-- (void)setSuspended:(BOOL)suspended;
+@property (nonatomic, weak) CBInfoTunnel *infoTunnel;
+@property (nonatomic, assign) BOOL shouldSuspend;
+- (instancetype)initWithInfoTunnel:(CBInfoTunnel *)infoTunnel;
+- (void)setPlaying:(BOOL)playing;
 - (void)updateWithImage:(UIImage *)image;
-- (void)updateWithVideoItem:(AVPlayerItem *)item;
 - (void)invalidate;
 @end

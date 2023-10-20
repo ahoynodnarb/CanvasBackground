@@ -1,33 +1,45 @@
 #import "CBInfoTunnel.h"
-#import <AVKit/AVKit.h>
 #import <MRYIPCCenter.h>
 
-@interface CBInfoTunnel ()
-@property (nonatomic, strong) MRYIPCCenter *center;
+@interface CBInfoTunnel () {
+    AVPlayerLooper *playerLooper;
+    MRYIPCCenter *center;
+}
 @end
 
 @implementation CBInfoTunnel
-static CBInfoTunnel *tunnel;
 
 + (instancetype)sharedTunnel {
-    if (!tunnel) tunnel = [[self alloc] init];
-    return tunnel;
+    static CBInfoTunnel *sharedTunnel;
+    static dispatch_once_t t;
+    dispatch_once(&t, ^{
+        sharedTunnel = [[self alloc] init];
+    });
+    return sharedTunnel;
 }
 
 - (instancetype)init {
     if (self = [super init]) {
+        _player = [[AVQueuePlayer alloc] init];
+        _player.muted = YES;
+        _player.preventsDisplaySleepDuringVideoPlayback = NO;
         self.observers = [NSMutableSet set];
-        self.center = [NSClassFromString(@"MRYIPCCenter") centerNamed:@"CanvasBackground.CanvasServer"];
-        [self.center addTarget:self action:@selector(updateWithVideoInfo:)];
-        [self.center addTarget:self action:@selector(updateWithImageData:)];
-        [self.center addTarget:self action:@selector(setPlaying:)];
+        center = [NSClassFromString(@"MRYIPCCenter") centerNamed:@"CanvasBackground.CanvasServer"];
+        [center addTarget:self action:@selector(updateWithVideoInfo:)];
+        [center addTarget:self action:@selector(updateWithImageData:)];
+        [center addTarget:self action:@selector(updatePlaybackState:)];
     }
     return self;
 }
 
-- (void)executeBlock:(void (^)(void))block {
-    if ([NSThread isMainThread]) block();
-    else dispatch_sync(dispatch_get_main_queue(), block);
+- (void)setPlaying:(BOOL)playing {
+    _playing = playing;
+    [self executeObserverBlock:^(NSObject<CBCanvasObserver> *observer) {
+        [observer setPlaying:playing];
+    } completion:^{
+        if (playing) [_player play];
+        else [_player pause];
+    }];
 }
 
 - (void)addObserver:(id<CBCanvasObserver>)observer {
@@ -38,47 +50,75 @@ static CBInfoTunnel *tunnel;
     [self.observers removeObject:observer];
 }
 
+- (void)executeObserverBlock:(void (^)(NSObject<CBCanvasObserver> *))block completion:(void (^)(void))completion {
+    // ensure that all finish at the same time
+    dispatch_group_t group = dispatch_group_create();
+    for (NSObject<CBCanvasObserver> *observer in self.observers) {
+        dispatch_group_enter(group);
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            block(observer);
+            dispatch_group_leave(group);
+        });
+    }
+    if (completion) {
+        dispatch_group_notify(group, dispatch_get_main_queue(), completion);
+    }
+}
+
 - (void)invalidate {
-    void (^block)(void) = ^{
-        for (id<CBCanvasObserver> observer in self.observers) {
-            [observer invalidate];
-        }
-    };
-    [self executeBlock:block];
+    [self executeObserverBlock:^(NSObject<CBCanvasObserver> *observer) {
+        [observer invalidate];
+    } completion:nil];
+    [_player removeAllItems];
 }
 
 - (void)updateWithVideoInfo:(NSDictionary *)info {
     NSURL *URL = [NSURL URLWithString:info[@"url"]];
-    NSData *imageData = info[@"fallback"];
     AVURLAsset *asset = [AVURLAsset assetWithURL:URL];
     AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
-    UIImage *fallbackImage = [UIImage imageWithData:imageData];
-    void (^block)(void) = ^{
-        for (id<CBCanvasObserver> observer in self.observers) {
-            if (item) [observer updateWithVideoItem:item];
-            else [observer updateWithImage:fallbackImage];
-        }
-    };
-    [self executeBlock:block];
+    if (!item) {
+        NSData *imageData = info[@"fallback"];
+        [self updateWithImageData:imageData];
+        return;
+    }
+    playerLooper = [AVPlayerLooper playerLooperWithPlayer:_player templateItem:item];
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+    AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+    [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:CMTimeMakeWithSeconds(0, 1)]] completionHandler:^(CMTime requestedTime, CGImageRef im, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
+        UIImage *image = [UIImage imageWithCGImage:im];
+        [self executeObserverBlock:^(NSObject<CBCanvasObserver> *observer) {
+            [observer updateWithImage:image];
+        } completion:nil];
+    }];
 }
 
 - (void)updateWithImageData:(NSData *)data {
+    [_player removeAllItems];
     UIImage *image = [UIImage imageWithData:data];
-    void (^block)(void) = ^{
-        for (id<CBCanvasObserver> observer in self.observers) {
-            [observer updateWithImage:image];
-        }
-    };
-    [self executeBlock:block];
+    [self executeObserverBlock:^(NSObject<CBCanvasObserver> *observer) {
+        [observer updateWithImage:image];
+    } completion:nil];
 }
 
-- (void)setPlaying:(NSNumber *)number {
+- (void)updatePlaybackState:(NSNumber *)number {
     BOOL playing = [number boolValue];
-    void (^block)(void) = ^{
-        for (id<CBCanvasObserver> observer in self.observers) {
-            [observer setPlaying:playing];
-        }
-    };
-    [self executeBlock:block];
+    if (playing == self.playing) return;
+    self.playing = playing;
 }
+
+- (void)setSuspended:(BOOL)suspended {
+    if (suspended) [_player pause];
+    else if (self.playing) [_player play];
+}
+
+- (void)observerChangedSuspension:(NSObject<CBCanvasObserver> *)observer {
+    for (NSObject<CBCanvasObserver> *observer in self.observers) {
+        if (!observer.shouldSuspend) {
+            [self setSuspended:NO];
+            return;
+        }
+    }
+    [self setSuspended:YES];
+}
+
 @end

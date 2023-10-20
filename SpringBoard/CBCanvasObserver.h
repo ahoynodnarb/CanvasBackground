@@ -3,8 +3,8 @@
 
 @protocol CBCanvasObserver
 @required
+@property (nonatomic, assign) BOOL shouldSuspend;
 - (void)updateWithImage:(UIImage *)image;
-- (void)updateWithVideoItem:(AVPlayerItem *)item;
 - (void)setPlaying:(BOOL)playing;
 - (void)invalidate;
 @end

@@ -27,3 +27,11 @@
 @property (nonatomic, strong) CBViewController *canvasController;
 @property (nonatomic, strong) UIView *panelBackgroundContainerView;
 @end
+
+@interface CSMainPageContentViewController : UIViewController
+@property (nonatomic, strong) CBViewController *canvasController;
+@end
+
+@interface CSEvent
+@property (nonatomic, assign) unsigned long long type;
+@end

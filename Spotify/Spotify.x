@@ -58,7 +58,7 @@ SPTPlayerTrack *previousTrack;
 
 - (void)playerDidUpdatePlaybackControls:(SPTStatefulPlayerImplementation *)arg1 {
     %orig;
-    [self.center callExternalVoidMethod:@selector(setPlaying:) withArguments:@(!arg1.isPaused)];
+    [self.center callExternalVoidMethod:@selector(updatePlaybackState:) withArguments:@(!arg1.isPaused)];
 }
 - (id)initWithPlayer:(id)arg0 collectionPlatform:(id)arg1 playlistDataLoader:(id)arg2 radioPlaybackService:(id)arg3 adsManager:(id)arg4 productState:(id)arg5 testManager:(id)arg6 collectionTestManager:(id)arg7 statefulPlayer:(id)arg8 yourEpisodesSaveManager:(id)arg9 educationEligibility:(id)arg10 reinventFreeConfiguration:(id)arg11 curationPlatform:(id)arg12 smartShuffleHandler:(id)arg13 {
     self.center = [%c(MRYIPCCenter) centerNamed:@"CanvasBackground.CanvasServer"];
@@ -67,36 +67,9 @@ SPTPlayerTrack *previousTrack;
 }
 %end
 
-// %hook SPTImageLoaderService
-// - (id)createImageLoaderFactory:(id)arg0 username:(id)arg1 {
-//     NSLog(@"canvasBackground %@ %@ %@", NSStringFromSelector(_cmd), arg0, arg1);
-//     return %orig;
-// }
-// %end
-
 %hook SPTGLUEServiceImplementation
-// -(void)_injectDependenciesWithProvider:(id)arg0 {
-//     %orig;
-//     NSLog(@"canvasBackground %@ %@", NSStringFromSelector(_cmd), [self provideImageLoaderFactory]);
-// }
-// -(id)imageLoadingService_propertyWrapper {
-//     NSLog(@"canvasBackground %@ %@", NSStringFromSelector(_cmd), [self provideImageLoaderFactory]);
-//     return %orig;
-// }
-// -(id)imageLoadingService {
-//     NSLog(@"canvasBackground %@ %@", NSStringFromSelector(_cmd), [self provideImageLoaderFactory]);
-//     return %orig;
-// }
 -(void)load {
     %orig;
     GLUEService = self;
 }
-// -(void)loadStyling {
-//     %orig;
-//     NSLog(@"canvasBackground %@ %@", NSStringFromSelector(_cmd), [self provideImageLoaderFactory]);
-// }
-// - (id)init {
-//     NSLog(@"canvasBackground %@ %@", NSStringFromSelector(_cmd), [self provideImageLoaderFactory]);
-//     return %orig;
-// }
 %end

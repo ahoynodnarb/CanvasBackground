@@ -7,11 +7,18 @@
 }
 %end
 
+%hook FBProcessManager
+- (void)noteProcessDidExit:(FBProcess *)process {
+    %orig;
+    if ([process.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[%c(CBInfoTunnel) sharedTunnel] invalidate];
+}
+%end
+
 %hook SBHomeScreenViewController
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
 	%orig;
-	self.canvasController = [[%c(CBViewController) alloc] initWithCanvasServer:[%c(CBInfoTunnel) sharedTunnel]];
+	self.canvasController = [[%c(CBViewController) alloc] initWithInfoTunnel:[%c(CBInfoTunnel) sharedTunnel]];
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
     self.canvasController.view.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view insertSubview:self.canvasController.view atIndex:0];
@@ -23,9 +30,10 @@
         [self.canvasController.view.rightAnchor constraintEqualToAnchor:self.view.rightAnchor],
     ]];
 }
+
 - (void)setIconControllerHidden:(BOOL)hidden {
     %orig;
-    [self.canvasController setSuspended:hidden];
+    self.canvasController.shouldSuspend = hidden;
 }
 %end
 
@@ -34,7 +42,7 @@
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
 	%orig;
-	self.canvasController = [[%c(CBViewController) alloc] initWithCanvasServer:[%c(CBInfoTunnel) sharedTunnel]];
+	self.canvasController = [[%c(CBViewController) alloc] initWithInfoTunnel:[%c(CBInfoTunnel) sharedTunnel]];
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
     self.canvasController.view.translatesAutoresizingMaskIntoConstraints = NO;
     [self.panelBackgroundContainerView addSubview:self.canvasController.view];
@@ -47,13 +55,21 @@
     ]];
 }
 
-- (void)_beginTransitionFromAppeared:(BOOL)arg1 {
-    self.contentViewController.canvasController.view.hidden = YES;
+- (void)_beginTransitionFromAppeared:(BOOL)appeared {
     %orig;
+    if (!appeared) {
+        self.contentViewController.canvasController.shouldSuspend = NO;
+    }
+    self.canvasController.shouldSuspend = NO;
+    self.contentViewController.canvasController.view.hidden = YES;
 }
 
-- (void)_endTransitionToAppeared:(BOOL)arg1 {
+- (void)_endTransitionToAppeared:(BOOL)appeared {
     %orig;
+    if (!appeared) {
+        self.contentViewController.canvasController.shouldSuspend = YES;
+    }
+    self.canvasController.shouldSuspend = YES;
     self.contentViewController.canvasController.view.hidden = NO;
 }
 
@@ -63,7 +79,7 @@
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
 	%orig;
-	self.canvasController = [[%c(CBViewController) alloc] initWithCanvasServer:[%c(CBInfoTunnel) sharedTunnel]];
+	self.canvasController = [[%c(CBViewController) alloc] initWithInfoTunnel:[%c(CBInfoTunnel) sharedTunnel]];
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
     self.canvasController.view.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view.slideableContentView addSubview:self.canvasController.view];
@@ -75,11 +91,13 @@
         [self.canvasController.view.rightAnchor constraintEqualToAnchor:self.view.slideableContentView.rightAnchor],
     ]];
 }
+
 %end
 
-%hook FBProcessManager
-- (void)noteProcessDidExit:(FBProcess *)process {
+%hook SBBacklightController
+- (void)setBacklightFactorPending:(float)backlightFactor  {
     %orig;
-    if ([process.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[%c(CBInfoTunnel) sharedTunnel] invalidate];
+    BOOL screenOff = backlightFactor == 0.0f;
+    [[CBInfoTunnel sharedTunnel] setSuspended:screenOff];
 }
 %end
