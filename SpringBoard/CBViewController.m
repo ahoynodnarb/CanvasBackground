@@ -28,21 +28,24 @@
 }
 
 - (void)animateFade:(BOOL)fadeIn completion:(void (^)(void))completion {
+    CGFloat currentOpacity = self.view.layer.opacity;
+    CGFloat targetOpacity = fadeIn ? 1.0f : 0.0f;
+    if (currentOpacity == targetOpacity) return;
     [CATransaction begin];
     if (completion) [CATransaction setCompletionBlock:completion];
     CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
-    CGFloat currentOpacity = self.view.layer.opacity;
     animation.duration = 0.25f;
     animation.fromValue = @(currentOpacity);
-    if (fadeIn) {
-        if (currentOpacity == 1.0f) return;
-        animation.toValue = @(1.0f);
-        self.view.layer.opacity = 1;
-    }
-    else if (currentOpacity != 0) {
-        animation.toValue = @(0.0f);
-        self.view.layer.opacity = 0;
-    }
+    animation.toValue = @(targetOpacity);
+    self.view.layer.opacity = targetOpacity;
+    // if (fadeIn) {
+    //     if (currentOpacity == 1.0f) return;
+    // }
+    // else {
+    //     if (currentOpacity == 0) return;
+    //     animation.toValue = @(targetOpacity);
+    //     self.view.layer.opacity = 0;
+    // }
     [self.view.layer addAnimation:animation forKey:nil];
     [CATransaction commit];
 }

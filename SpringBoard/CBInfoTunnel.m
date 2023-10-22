@@ -37,7 +37,7 @@
     [self executeObserverBlock:^(NSObject<CBCanvasObserver> *observer) {
         [observer setPlaying:playing];
     } completion:^{
-        if (playing) [_player play];
+        if (_playing) [_player play];
         else [_player pause];
     }];
 }
@@ -81,6 +81,7 @@
         [self updateWithImageData:imageData];
         return;
     }
+    [_player removeAllItems];
     playerLooper = [AVPlayerLooper playerLooperWithPlayer:_player templateItem:item];
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
     AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
