@@ -27,9 +27,9 @@
 @property (nonatomic, strong) MRYIPCCenter *center;
 @property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
 @property (nonatomic, strong) SPTPlayerTrack *currentTrack;
-+ (NSURL *)localURLForCanvas:(NSURL *)canvasURL;
-- (void)loadImageForTrack:(SPTPlayerTrack *)track completion:(void (^)(UIImage *, NSError *))completion;
-- (void)sendTrackImage:(SPTPlayerTrack *)track;
++ (NSString *)localPathForCanvas:(NSString *)canvasURL;
+- (void)sendTrackImage:(NSURL *)imageURL;
+- (void)sendStaticCanvas:(NSURL *)imageURL;
 - (void)sendUpdateWithTrack:(SPTPlayerTrack *)track;
 @end
 

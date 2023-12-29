@@ -11,6 +11,7 @@
 - (instancetype)initWithInfoTunnel:(CBInfoTunnel *)infoTunnel {
     if (self = [super init]) {
         self.infoTunnel = infoTunnel;
+        canvasPlayer = [self.infoTunnel player];
         [infoTunnel addObserver:self];
     }
     return self;
@@ -38,22 +39,12 @@
     animation.fromValue = @(currentOpacity);
     animation.toValue = @(targetOpacity);
     self.view.layer.opacity = targetOpacity;
-    // if (fadeIn) {
-    //     if (currentOpacity == 1.0f) return;
-    // }
-    // else {
-    //     if (currentOpacity == 0) return;
-    //     animation.toValue = @(targetOpacity);
-    //     self.view.layer.opacity = 0;
-    // }
     [self.view.layer addAnimation:animation forKey:nil];
     [CATransaction commit];
 }
 
 - (void)updateWithImage:(UIImage *)image {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        self.canvasImageView.image = image;
-    });
+    self.canvasImageView.image = image;
 }
 
 - (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
@@ -84,7 +75,6 @@
 	self.canvasImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
 	self.canvasImageView.contentMode = UIViewContentModeScaleAspectFill;
 	[self.view addSubview:self.canvasImageView];
-	canvasPlayer = [self.infoTunnel player];
 	canvasPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:canvasPlayer];
 	[self.view.layer addSublayer:canvasPlayerLayer];
 	canvasPlayerLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;

@@ -1,5 +1,6 @@
 #import "CBInfoTunnel.h"
 #import <MRYIPCCenter.h>
+#import <Foundation/NSDistributedNotificationCenter.h>
 
 @interface CBInfoTunnel () {
     AVPlayerLooper *playerLooper;
@@ -72,18 +73,11 @@
     [_player removeAllItems];
 }
 
-- (void)updateWithVideoInfo:(NSDictionary *)info {
-    NSURL *URL = [NSURL URLWithString:info[@"url"]];
+- (void)updateWithVideoInfo:(NSString *)videoURL {
+    NSURL *URL = [NSURL URLWithString:videoURL];
     AVURLAsset *asset = [AVURLAsset assetWithURL:URL];
     AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
-    if (!item) {
-        NSData *imageData = info[@"fallback"];
-        [self updateWithImageData:imageData];
-        return;
-    }
     [_player removeAllItems];
-    playerLooper = [AVPlayerLooper playerLooperWithPlayer:_player templateItem:item];
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
     AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
     [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:CMTimeMakeWithSeconds(0, 1)]] completionHandler:^(CMTime requestedTime, CGImageRef im, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
         UIImage *image = [UIImage imageWithCGImage:im];
@@ -91,6 +85,8 @@
             [observer updateWithImage:image];
         } completion:nil];
     }];
+    playerLooper = [AVPlayerLooper playerLooperWithPlayer:_player templateItem:item];
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 }
 
 - (void)updateWithImageData:(NSData *)data {
