@@ -30,6 +30,7 @@
 + (NSString *)localPathForCanvas:(NSString *)canvasURL;
 - (void)sendTrackImage:(NSURL *)imageURL;
 - (void)sendStaticCanvas:(NSURL *)imageURL;
+- (void)writeCanvasToFile:(NSURL *)canvasURL filePath:(NSURL *)fileURL;
 - (void)sendUpdateWithTrack:(SPTPlayerTrack *)track;
 @end
 

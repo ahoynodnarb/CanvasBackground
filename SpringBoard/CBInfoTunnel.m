@@ -1,6 +1,5 @@
 #import "CBInfoTunnel.h"
 #import <MRYIPCCenter.h>
-#import <Foundation/NSDistributedNotificationCenter.h>
 
 @interface CBInfoTunnel () {
     AVPlayerLooper *playerLooper;
@@ -26,7 +25,8 @@
         _player.preventsDisplaySleepDuringVideoPlayback = NO;
         self.observers = [NSMutableSet set];
         center = [NSClassFromString(@"MRYIPCCenter") centerNamed:@"CanvasBackground.CanvasServer"];
-        [center addTarget:self action:@selector(updateWithVideoInfo:)];
+        [center addTarget:self action:@selector(updateVideoWithURL:)];
+        [center addTarget:self action:@selector(updateVideoWithPath:)];
         [center addTarget:self action:@selector(updateWithImageData:)];
         [center addTarget:self action:@selector(updatePlaybackState:)];
     }
@@ -56,6 +56,7 @@
     dispatch_group_t group = dispatch_group_create();
     for (NSObject<CBCanvasObserver> *observer in self.observers) {
         dispatch_group_enter(group);
+        // dispatch_async(dispatch_get_main_queue(), ^{
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             block(observer);
             dispatch_group_leave(group);
@@ -73,9 +74,18 @@
     [_player removeAllItems];
 }
 
-- (void)updateWithVideoInfo:(NSString *)videoURL {
+- (void)updateVideoWithURL:(NSString *)videoURL {
     NSURL *URL = [NSURL URLWithString:videoURL];
-    AVURLAsset *asset = [AVURLAsset assetWithURL:URL];
+    [self updateVideo:URL];
+}
+
+- (void)updateVideoWithPath:(NSString *)videoPath {
+    NSURL *URL = [NSURL fileURLWithPath:videoPath];
+    [self updateVideo:URL];
+}
+
+- (void)updateVideo:(NSURL *)URL {
+    AVAsset *asset = [AVAsset assetWithURL:URL];
     AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
     [_player removeAllItems];
     AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];

@@ -13,7 +13,9 @@
 - (void)removeObserver:(NSObject<CBCanvasObserver> *)observer;
 - (void)executeObserverBlock:(void (^)(NSObject<CBCanvasObserver> *))block completion:(void (^)(void))completion;
 - (void)invalidate;
-- (void)updateWithVideoInfo:(NSString *)videoURL;
+- (void)updateVideo:(NSURL *)URL;
+- (void)updateVideoWithURL:(NSString *)videoURL;
+- (void)updateVideoWithPath:(NSString *)videoPath;
 - (void)updateWithImageData:(NSData *)data;
 - (void)setSuspended:(BOOL)suspended;
 - (void)observerChangedSuspension:(NSObject<CBCanvasObserver> *)observer;

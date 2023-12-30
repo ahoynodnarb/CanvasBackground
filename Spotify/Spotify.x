@@ -1,7 +1,4 @@
 #import "Spotify.h"
-#import <Foundation/NSDistributedNotificationCenter.h>
-
-SPTPlayerTrack *previousTrack;
 
 %hook SPTNowPlayingModel
 %property (nonatomic, strong) MRYIPCCenter *center;
@@ -10,7 +7,7 @@ SPTPlayerTrack *previousTrack;
 + (NSString *)localPathForCanvas:(NSString *)canvasURL {
     if ([canvasURL hasPrefix:@"https"]) {
         NSRange range = [canvasURL rangeOfString:@"//"];
-        canvasURL = [canvasURL substringFromIndex:range.location + 1];
+        canvasURL = [canvasURL substringFromIndex:range.location + [@"canvaz.scdn.co/" length] + 1];
     }
     NSString *libraryPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
     NSString *fileName = [[canvasURL stringByReplacingOccurrencesOfString:@"/" withString:@"-"] substringFromIndex:1];
@@ -34,17 +31,31 @@ SPTPlayerTrack *previousTrack;
 }
 
 %new
+- (void)writeCanvasToFile:(NSURL *)canvasURL filePath:(NSURL *)fileURL {
+    NSData *canvasData = [NSData dataWithContentsOfURL:canvasURL];
+    [canvasData writeToURL:fileURL atomically:YES];
+}
+
+%new
 - (void)sendUpdateWithTrack:(SPTPlayerTrack *)track {
-    NSString *originalURL = [track.metadata objectForKey:@"canvas.url"];
+    NSDictionary *metadata = [track metadata];
+    NSString *originalURL = [metadata objectForKey:@"canvas.url"];
     if (!originalURL) {
         [self sendTrackImage:track.imageURL];
         return;
     }
+    NSString *canvasType = [metadata objectForKey:@"canvas.type"];
+    if ([canvasType isEqualToString:@"IMAGE"]) {
+        [self sendStaticCanvas:track.imageURL];
+        return;
+    }
     NSString *filePath = [%c(SPTNowPlayingModel) localPathForCanvas:originalURL];
-    NSString *URL = [[NSFileManager defaultManager] fileExistsAtPath:filePath] ? filePath : originalURL;
-    BOOL canvasStatic = [track.metadata[@"canvas.type"] isEqualToString:@"IMAGE"];
-    if (canvasStatic) [self sendStaticCanvas:track.imageURL];
-    else [self.center callExternalVoidMethod:@selector(updateWithVideoInfo:) withArguments:URL];
+    BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:filePath];
+    if (fileExists) [self.center callExternalVoidMethod:@selector(updateVideoWithPath:) withArguments:filePath];
+    else {
+        [self.center callExternalVoidMethod:@selector(updateVideoWithURL:) withArguments:originalURL];
+        [self writeCanvasToFile:[NSURL URLWithString:originalURL] filePath:[NSURL fileURLWithPath:filePath]];
+    }
 }
 
 - (void)player:(id)player didMoveToRelativeTrack:(id)track {

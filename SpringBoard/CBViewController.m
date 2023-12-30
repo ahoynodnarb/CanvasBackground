@@ -44,7 +44,9 @@
 }
 
 - (void)updateWithImage:(UIImage *)image {
-    self.canvasImageView.image = image;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.canvasImageView.image = image;
+    });
 }
 
 - (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
