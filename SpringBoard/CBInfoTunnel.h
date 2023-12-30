@@ -9,11 +9,12 @@
 @property (nonatomic, readonly) AVQueuePlayer *player;
 @property (nonatomic, assign) BOOL playing;
 + (instancetype)sharedTunnel;
+- (void)handleMessage:(NSString *)messageName userInfo:(NSDictionary *)userInfo;
 - (void)addObserver:(NSObject<CBCanvasObserver> *)observer;
 - (void)removeObserver:(NSObject<CBCanvasObserver> *)observer;
 - (void)executeObserverBlock:(void (^)(NSObject<CBCanvasObserver> *))block completion:(void (^)(void))completion;
 - (void)invalidate;
-- (void)updateWithVideoInfo:(NSString *)videoURL;
+- (void)updateWithVideoURL:(NSString *)videoURL;
 - (void)updateWithImageData:(NSData *)data;
 - (void)setSuspended:(BOOL)suspended;
 - (void)observerChangedSuspension:(NSObject<CBCanvasObserver> *)observer;

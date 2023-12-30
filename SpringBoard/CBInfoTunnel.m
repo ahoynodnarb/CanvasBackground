@@ -1,10 +1,25 @@
 #import "CBInfoTunnel.h"
-#import <MRYIPCCenter.h>
-#import <Foundation/NSDistributedNotificationCenter.h>
+#import <rocketbootstrap/rocketbootstrap.h>
+#import <rootless.h>
+
+void log_impl(NSString *logStr) {
+	// NSLog(@"BPS: %@", [logStr stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
+	NSString *logFile = ROOT_PATH_NS(@"/var/mobile/canvasbackground.log");
+	NSFileManager *fm = NSFileManager.defaultManager;
+	if (![fm fileExistsAtPath:logFile])
+		[fm createFileAtPath:logFile contents:nil attributes:nil];
+	NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:logFile];
+	[fileHandle seekToEndOfFile];
+	[fileHandle writeData:[[NSString stringWithFormat:@"%@\n", logStr] dataUsingEncoding:NSUTF8StringEncoding]];
+	[fileHandle closeFile];
+}
+
+#define LOG(...) log_impl([NSString stringWithFormat:__VA_ARGS__])
 
 @interface CBInfoTunnel () {
     AVPlayerLooper *playerLooper;
-    MRYIPCCenter *center;
+    CPDistributedMessagingCenter *center;
+    // MRYIPCCenter *center;
 }
 @end
 
@@ -25,10 +40,19 @@
         _player.muted = YES;
         _player.preventsDisplaySleepDuringVideoPlayback = NO;
         self.observers = [NSMutableSet set];
-        center = [NSClassFromString(@"MRYIPCCenter") centerNamed:@"CanvasBackground.CanvasServer"];
-        [center addTarget:self action:@selector(updateWithVideoInfo:)];
-        [center addTarget:self action:@selector(updateWithImageData:)];
-        [center addTarget:self action:@selector(updatePlaybackState:)];
+        rocketbootstrap_unlock("CanvasBackground.CanvasServer");
+        center = [NSClassFromString(@"CPDistributedMessagingCenter") centerNamed:@"CanvasBackground.CanvasServer"];
+        LOG(@"initialized");
+        // center = [NSClassFromString(@"MRYIPCCenter") centerNamed:@"CanvasBackground.CanvasServer"];
+        rocketbootstrap_distributedmessagingcenter_apply(center);
+		[center runServerOnCurrentThread];
+		[center registerForMessageName:@"updateWithVideoURL" target:self selector:@selector(handleMessage:userInfo:)];
+		[center registerForMessageName:@"updateWithImageData" target:self selector:@selector(handleMessage:userInfo:)];
+		[center registerForMessageName:@"updatePlaybackState" target:self selector:@selector(handleMessage:userInfo:)];
+        // [center addTarget:self action:@selector(updateWithVideoURL:)];
+        // [center addTarget:self action:@selector(updateWithImageData:)];
+        // [center addTarget:self action:@selector(updatePlaybackState:)];
+
     }
     return self;
 }
@@ -56,7 +80,8 @@
     dispatch_group_t group = dispatch_group_create();
     for (NSObject<CBCanvasObserver> *observer in self.observers) {
         dispatch_group_enter(group);
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+        // dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             block(observer);
             dispatch_group_leave(group);
         });
@@ -73,7 +98,34 @@
     [_player removeAllItems];
 }
 
-- (void)updateWithVideoInfo:(NSString *)videoURL {
+- (void)handleMessage:(NSString *)messageName userInfo:(NSDictionary *)userInfo {
+    id arg = [userInfo objectForKey:@"argument"];
+    LOG(@"canvasBackground handling message");
+    // switch (messageName) {
+    //     case @"updateWithVideoURL":
+    //         [self updateWithVideoURL:arg];
+    //         break;
+    //     case @"updateWithImageData":
+    //         [self updateWithImageData:arg];
+    //         break;
+    //     case @"updatePlaybackState":
+    //         [self updatePlaybackState:arg];
+    //         break;
+    // }
+    if ([messageName isEqualToString:@"updateWithVideoURL"]) {
+        // NSString *URL = [userInfo objectForKey:@"URL"];
+        [self updateWithVideoURL:arg];
+    }
+    else if ([messageName isEqualToString:@"updateWithImageData"]) {
+        // NSData *data = [userInfo objectForKey:@"data"];
+        [self updateWithImageData:arg];
+    }
+    else if ([messageName isEqualToString:@"updatePlaybackState"]) {
+        [self updatePlaybackState:arg];
+    }
+}
+
+- (void)updateWithVideoURL:(NSString *)videoURL {
     NSURL *URL = [NSURL URLWithString:videoURL];
     AVURLAsset *asset = [AVURLAsset assetWithURL:URL];
     AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];

@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
-#import <MRYIPCCenter.h>
+// #import <MRYIPCCenter.h>
+#import <rocketbootstrap/rocketbootstrap.h>
 
 @interface SPTGLUEImageLoader
 - (void)loadImageForURL:(NSURL *)url imageSize:(CGSize)size completion:(id)completion;
@@ -24,7 +25,8 @@
 @end
 
 @interface SPTNowPlayingModel
-@property (nonatomic, strong) MRYIPCCenter *center;
+@property (nonatomic, strong) CPDistributedMessagingCenter *center;
+// @property (nonatomic, strong) MRYIPCCenter *center;
 @property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
 @property (nonatomic, strong) SPTPlayerTrack *currentTrack;
 + (NSString *)localPathForCanvas:(NSString *)canvasURL;
