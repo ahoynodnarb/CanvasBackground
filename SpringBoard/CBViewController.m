@@ -29,7 +29,7 @@
 }
 
 - (void)animateFade:(BOOL)fadeIn completion:(void (^)(void))completion {
-    CGFloat currentOpacity = self.view.layer.opacity;
+    CGFloat currentOpacity = [self.view.layer opacity];
     CGFloat targetOpacity = fadeIn ? 1.0f : 0.0f;
     if (currentOpacity == targetOpacity) return;
     [CATransaction begin];
@@ -44,12 +44,14 @@
 }
 
 - (void)updateWithImage:(UIImage *)image {
-    self.canvasImageView.image = image;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.canvasImageView.image = image;
+    });
 }
 
 - (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if ([path isEqualToString:@"readyForDisplay"]) {
-        self.canvasImageView.hidden = canvasPlayerLayer.readyForDisplay;
+        self.canvasImageView.hidden = [canvasPlayerLayer isReadyForDisplay];
         return;
     }
 }
@@ -84,7 +86,7 @@
 
 - (void)viewWillLayoutSubviews {
     [super viewWillLayoutSubviews];
-    canvasPlayerLayer.frame = self.view.bounds;
+    canvasPlayerLayer.frame = [self.view bounds];
 }
 
 - (BOOL)_canShowWhileLocked {

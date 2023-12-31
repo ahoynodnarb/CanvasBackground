@@ -3,7 +3,6 @@
 #import <rootless.h>
 
 void log_impl(NSString *logStr) {
-	// NSLog(@"BPS: %@", [logStr stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
 	NSString *logFile = ROOT_PATH_NS(@"/var/mobile/canvasbackground.log");
 	NSFileManager *fm = NSFileManager.defaultManager;
 	if (![fm fileExistsAtPath:logFile])
@@ -19,7 +18,6 @@ void log_impl(NSString *logStr) {
 @interface CBInfoTunnel () {
     AVPlayerLooper *playerLooper;
     CPDistributedMessagingCenter *center;
-    // MRYIPCCenter *center;
 }
 @end
 
@@ -40,18 +38,13 @@ void log_impl(NSString *logStr) {
         _player.muted = YES;
         _player.preventsDisplaySleepDuringVideoPlayback = NO;
         self.observers = [NSMutableSet set];
-        rocketbootstrap_unlock("CanvasBackground.CanvasServer");
         center = [NSClassFromString(@"CPDistributedMessagingCenter") centerNamed:@"CanvasBackground.CanvasServer"];
-        LOG(@"initialized");
-        // center = [NSClassFromString(@"MRYIPCCenter") centerNamed:@"CanvasBackground.CanvasServer"];
         rocketbootstrap_distributedmessagingcenter_apply(center);
 		[center runServerOnCurrentThread];
-		[center registerForMessageName:@"updateWithVideoURL" target:self selector:@selector(handleMessage:userInfo:)];
-		[center registerForMessageName:@"updateWithImageData" target:self selector:@selector(handleMessage:userInfo:)];
+		[center registerForMessageName:@"updateVideoWithPath" target:self selector:@selector(handleMessage:userInfo:)];
+		[center registerForMessageName:@"updateVideoWithURL" target:self selector:@selector(handleMessage:userInfo:)];
+		[center registerForMessageName:@"updateImageWithData" target:self selector:@selector(handleMessage:userInfo:)];
 		[center registerForMessageName:@"updatePlaybackState" target:self selector:@selector(handleMessage:userInfo:)];
-        // [center addTarget:self action:@selector(updateWithVideoURL:)];
-        // [center addTarget:self action:@selector(updateWithImageData:)];
-        // [center addTarget:self action:@selector(updatePlaybackState:)];
 
     }
     return self;
@@ -80,8 +73,7 @@ void log_impl(NSString *logStr) {
     dispatch_group_t group = dispatch_group_create();
     for (NSObject<CBCanvasObserver> *observer in self.observers) {
         dispatch_group_enter(group);
-        dispatch_async(dispatch_get_main_queue(), ^{
-        // dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             block(observer);
             dispatch_group_leave(group);
         });
@@ -100,34 +92,24 @@ void log_impl(NSString *logStr) {
 
 - (void)handleMessage:(NSString *)messageName userInfo:(NSDictionary *)userInfo {
     id arg = [userInfo objectForKey:@"argument"];
-    LOG(@"canvasBackground handling message");
-    // switch (messageName) {
-    //     case @"updateWithVideoURL":
-    //         [self updateWithVideoURL:arg];
-    //         break;
-    //     case @"updateWithImageData":
-    //         [self updateWithImageData:arg];
-    //         break;
-    //     case @"updatePlaybackState":
-    //         [self updatePlaybackState:arg];
-    //         break;
-    // }
-    if ([messageName isEqualToString:@"updateWithVideoURL"]) {
-        // NSString *URL = [userInfo objectForKey:@"URL"];
-        [self updateWithVideoURL:arg];
-    }
-    else if ([messageName isEqualToString:@"updateWithImageData"]) {
-        // NSData *data = [userInfo objectForKey:@"data"];
-        [self updateWithImageData:arg];
-    }
-    else if ([messageName isEqualToString:@"updatePlaybackState"]) {
-        [self updatePlaybackState:arg];
-    }
+    if ([messageName isEqualToString:@"updateVideoWithPath"]) [self updateVideoWithPath:arg];
+    else if ([messageName isEqualToString:@"updateVideoWithURL"]) [self updateVideoWithURL:arg];
+    else if ([messageName isEqualToString:@"updateImageWithData"]) [self updateImageWithData:arg];
+    else if ([messageName isEqualToString:@"updatePlaybackState"]) [self updatePlaybackState:arg];
 }
 
-- (void)updateWithVideoURL:(NSString *)videoURL {
+- (void)updateVideoWithURL:(NSString *)videoURL {
     NSURL *URL = [NSURL URLWithString:videoURL];
-    AVURLAsset *asset = [AVURLAsset assetWithURL:URL];
+    [self updateVideo:URL];
+}
+
+- (void)updateVideoWithPath:(NSString *)videoPath {
+    NSURL *URL = [NSURL fileURLWithPath:videoPath];
+    [self updateVideo:URL];
+}
+
+- (void)updateVideo:(NSURL *)URL {
+    AVAsset *asset = [AVAsset assetWithURL:URL];
     AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
     [_player removeAllItems];
     AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
@@ -141,7 +123,7 @@ void log_impl(NSString *logStr) {
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 }
 
-- (void)updateWithImageData:(NSData *)data {
+- (void)updateImageWithData:(NSData *)data {
     [_player removeAllItems];
     UIImage *image = [UIImage imageWithData:data];
     [self executeObserverBlock:^(NSObject<CBCanvasObserver> *observer) {
@@ -151,18 +133,18 @@ void log_impl(NSString *logStr) {
 
 - (void)updatePlaybackState:(NSNumber *)number {
     BOOL playing = [number boolValue];
-    if (playing == self.playing) return;
+    if (playing == [self playing]) return;
     self.playing = playing;
 }
 
 - (void)setSuspended:(BOOL)suspended {
     if (suspended) [_player pause];
-    else if (self.playing) [_player play];
+    else if ([self playing]) [_player play];
 }
 
 - (void)observerChangedSuspension:(NSObject<CBCanvasObserver> *)observer {
     for (NSObject<CBCanvasObserver> *observer in self.observers) {
-        if (!observer.shouldSuspend) {
+        if (![observer shouldSuspend]) {
             [self setSuspended:NO];
             return;
         }

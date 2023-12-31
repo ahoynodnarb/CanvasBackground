@@ -1,5 +1,4 @@
 #import <UIKit/UIKit.h>
-// #import <MRYIPCCenter.h>
 #import <rocketbootstrap/rocketbootstrap.h>
 
 @interface SPTGLUEImageLoader
@@ -26,12 +25,12 @@
 
 @interface SPTNowPlayingModel
 @property (nonatomic, strong) CPDistributedMessagingCenter *center;
-// @property (nonatomic, strong) MRYIPCCenter *center;
 @property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
 @property (nonatomic, strong) SPTPlayerTrack *currentTrack;
 + (NSString *)localPathForCanvas:(NSString *)canvasURL;
 - (void)sendTrackImage:(NSURL *)imageURL;
 - (void)sendStaticCanvas:(NSURL *)imageURL;
+- (void)writeCanvasToFile:(NSURL *)canvasURL filePath:(NSURL *)fileURL;
 - (void)sendUpdateWithTrack:(SPTPlayerTrack *)track;
 @end
 
