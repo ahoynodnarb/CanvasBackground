@@ -1,6 +1,6 @@
-#import "CBInfoTunnel.h"
 #import <rocketbootstrap/rocketbootstrap.h>
 #import <rootless.h>
+#import "CBInfoTunnel.h"
 
 void log_impl(NSString *logStr) {
 	NSString *logFile = ROOT_PATH_NS(@"/var/mobile/canvasbackground.log");

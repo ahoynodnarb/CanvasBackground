@@ -8,7 +8,6 @@ TWEAK_NAME = CanvasBackgroundSpotify
 
 $(TWEAK_NAME)_FILES = Spotify.x
 $(TWEAK_NAME)_CFLAGS = -fobjc-arc
-# $(TWEAK_NAME)_LIBRARIES = mryipc
 $(TWEAK_NAME)_LIBRARIES = rocketbootstrap
 $(TWEAK_NAME)_PRIVATE_FRAMEWORKS = AppSupport
 

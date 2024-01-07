@@ -1,5 +1,4 @@
 #import <UIKit/UIKit.h>
-#import <AVKit/AVKit.h>
 
 @protocol CBCanvasObserver
 @required
