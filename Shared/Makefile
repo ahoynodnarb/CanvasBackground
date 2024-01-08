@@ -6,6 +6,7 @@ TWEAK_NAME = CBShared
 
 $(TWEAK_NAME)_FILES = Shared.x
 $(TWEAK_NAME)_CFLAGS = -fobjc-arc
-$(TWEAK_NAME)_LIBRARIES = mryipc
+$(TWEAK_NAME)_LIBRARIES = rocketbootstrap
+$(TWEAK_NAME)_PRIVATE_FRAMEWORKS = AppSupport
 
 include $(THEOS_MAKE_PATH)/tweak.mk

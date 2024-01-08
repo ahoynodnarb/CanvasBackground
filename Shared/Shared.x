@@ -1,8 +1,8 @@
 #import <CBInfoSource.h>
-#import <MRYIPCCenter.h>
+#import <rocketbootstrap/rocketbootstrap.h>
 
 @interface CBInfoSource ()
-@property (nonatomic, strong) MRYIPCCenter *center;
+@property (nonatomic, strong) CPDistributedMessagingCenter *center;
 @property (nonatomic, readwrite) NSString *bundleID;
 @end
 
@@ -14,7 +14,8 @@
 
 - (instancetype)initWithBundleID:(NSString *)bundleID {
     if (self = [super init]) {
-        self.center = [%c(MRYIPCCenter) centerNamed:@"CanvasBackground.CanvasServer"];
+        self.center = [%c(CPDistributedMessagingCenter) centerNamed:@"CanvasBackground.CanvasServer"];
+        rocketbootstrap_distributedmessagingcenter_apply(self.center);
         self.bundleID = bundleID;
     }
     return self;
@@ -25,21 +26,21 @@
         @"path": path,
         @"bundleID": self.bundleID
     };
-    [self.center callExternalVoidMethod:@selector(updateVideoWithPath:) withArguments:userInfo];
+    [self.center sendMessageName:@"updateVideoWithPath" userInfo:userInfo];
 }
 - (void)sendVideoURL:(NSString *)URL {
     NSDictionary *userInfo = @{
         @"URL": URL,
         @"bundleID": self.bundleID
     };
-    [self.center callExternalVoidMethod:@selector(updateVideoWithURL:) withArguments:userInfo];
+    [self.center sendMessageName:@"updateVideoWithURL" userInfo:userInfo];
 }
 - (void)sendImageData:(NSData *)data {
     NSDictionary *userInfo = @{
         @"data": data,
         @"bundleID": self.bundleID
     };
-    [self.center callExternalVoidMethod:@selector(updateImageWithData:) withArguments:userInfo];
+    [self.center sendMessageName:@"updateImageWithData" userInfo:userInfo];
 }
 
 - (void)sendPlaybackState:(BOOL)playing {
@@ -47,6 +48,6 @@
         @"state": @(playing),
         @"bundleID": self.bundleID
     };
-    [self.center callExternalVoidMethod:@selector(updatePlaybackState:) withArguments:userInfo];
+    [self.center sendMessageName:@"updatePlaybackState" userInfo:userInfo];
 }
 @end

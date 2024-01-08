@@ -24,7 +24,7 @@
 @end
 
 @interface SPTNowPlayingModel
-@property (nonatomic, strong) MRYIPCCenter *center;
+@property (nonatomic, strong) CBInfoSource *source;
 @property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
 @property (nonatomic, strong) SPTPlayerTrack *currentTrack;
 + (NSString *)localPathForCanvas:(NSString *)canvasURL;

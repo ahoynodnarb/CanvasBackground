@@ -1,22 +1,5 @@
 #import "Spotify.h"
 
-void log_impl(NSString *logStr) {
-	// NSLog(@"BPS: %@", [logStr stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *documentsPath = [paths objectAtIndex:0];
-    NSString *logFile = [documentsPath stringByAppendingString:@"/canvasbackground.log"];
-	// NSString *logFile = ROOT_PATH_NS(@"/var/mobile/canvasbackground.log");
-	NSFileManager *fm = NSFileManager.defaultManager;
-	if (![fm fileExistsAtPath:logFile])
-		[fm createFileAtPath:logFile contents:nil attributes:nil];
-	NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:logFile];
-	[fileHandle seekToEndOfFile];
-	[fileHandle writeData:[[NSString stringWithFormat:@"%@\n", logStr] dataUsingEncoding:NSUTF8StringEncoding]];
-	[fileHandle closeFile];
-}
-
-#define LOG(...) log_impl([NSString stringWithFormat:__VA_ARGS__])
-
 %hook SPTNowPlayingModel
 %property (nonatomic, strong) CBInfoSource *source;
 %property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;

@@ -1,5 +1,5 @@
 #import "CBInfoForwarder.h"
-#import <MRYIPCCenter.h>
+#import <rocketbootstrap/rocketbootstrap.h>
 
 @interface SBMediaController
 @property (nonatomic, readonly) NSString *nowPlayingBundleID;
@@ -30,11 +30,13 @@
         _player.muted = YES;
         _player.preventsDisplaySleepDuringVideoPlayback = NO;
         self.observers = [NSMutableSet set];
-        center = [NSClassFromString(@"MRYIPCCenter") centerNamed:@"CanvasBackground.CanvasServer"];
-        [center addTarget:self action:@selector(updateVideoWithURL:)];
-        [center addTarget:self action:@selector(updateVideoWithPath:)];
-        [center addTarget:self action:@selector(updateImageWithData:)];
-        [center addTarget:self action:@selector(updatePlaybackState:)];
+        center = [NSClassFromString(@"CPDistributedMessagingCenter") centerNamed:@"CanvasBackground.CanvasServer"];
+        rocketbootstrap_distributedmessagingcenter_apply(center);
+		[center runServerOnCurrentThread];
+		[center registerForMessageName:@"updateVideoWithPath" target:self selector:@selector(handleMessage:userInfo:)];
+		[center registerForMessageName:@"updateVideoWithURL" target:self selector:@selector(handleMessage:userInfo:)];
+		[center registerForMessageName:@"updateImageWithData" target:self selector:@selector(handleMessage:userInfo:)];
+		[center registerForMessageName:@"updatePlaybackState" target:self selector:@selector(handleMessage:userInfo:)];
     }
     return self;
 }
@@ -82,6 +84,25 @@
         [observer invalidate];
     } completion:nil];
     [_player removeAllItems];
+}
+
+- (void)handleMessage:(NSString *)messageName userInfo:(NSDictionary *)userInfo {
+    if ([messageName isEqualToString:@"updateVideoWithPath"]) {
+        [self updateVideoWithPath:userInfo];
+        return;
+    }
+    if ([messageName isEqualToString:@"updateVideoWithURL"]) {
+        [self updateVideoWithURL:userInfo];
+        return;
+    }
+    if ([messageName isEqualToString:@"updateImageWithData"]) {
+        [self updateImageWithData:userInfo];
+        return;
+    }
+    if ([messageName isEqualToString:@"updatePlaybackState"]) {
+        [self updatePlaybackState:userInfo];
+        return;
+    }
 }
 
 - (void)updateVideo:(NSURL *)URL {
