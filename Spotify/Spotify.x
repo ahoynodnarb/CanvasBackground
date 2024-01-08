@@ -18,7 +18,7 @@ void log_impl(NSString *logStr) {
 #define LOG(...) log_impl([NSString stringWithFormat:__VA_ARGS__])
 
 %hook SPTNowPlayingModel
-%property (nonatomic, strong) CPDistributedMessagingCenter *center;
+%property (nonatomic, strong) CBInfoSource *source;
 %property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
 %new
 + (NSString *)localPathForCanvas:(NSString *)canvasURL {
@@ -36,15 +36,18 @@ void log_impl(NSString *logStr) {
 - (void)sendTrackImage:(NSURL *)imageURL {
     [self.imageLoader loadImageForURL:imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *image, NSError *error) {
         NSData *imageData = UIImagePNGRepresentation(image);
-        [self.center sendMessageName:@"updateImageWithData" userInfo:@{@"argument": imageData}];
+        [self.source sendImageData:imageData];
     }];
 }
 
 %new
 - (void)sendStaticCanvas:(NSURL *)imageURL {
     NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
-    if (imageData) [self.center sendMessageName:@"updateImageWithData" userInfo:@{@"argument": imageData}];
-    else [self sendTrackImage:imageURL];
+    if (!imageData) {
+        [self sendTrackImage:imageURL];
+        return;
+    }
+    [self.source sendImageData:imageData];
 }
 
 %new
@@ -68,11 +71,12 @@ void log_impl(NSString *logStr) {
     }
     NSString *filePath = [%c(SPTNowPlayingModel) localPathForCanvas:originalURL];
     BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:filePath];
-    if (fileExists) [self.center sendMessageName:@"updateVideoWithPath" userInfo:@{@"argument": filePath}];
-    else {
-        [self.center sendMessageName:@"updateVideoWithURL" userInfo:@{@"argument": originalURL}];
+    if (!fileExists) {
+        [self.source sendVideoURL:originalURL];
         [self writeCanvasToFile:[NSURL URLWithString:originalURL] filePath:[NSURL fileURLWithPath:filePath]];
+        return;
     }
+    [self.source sendVideoPath:filePath];
 }
 
 - (void)player:(id)player didMoveToRelativeTrack:(id)track {
@@ -82,11 +86,10 @@ void log_impl(NSString *logStr) {
 
 - (void)playerDidUpdatePlaybackControls:(SPTStatefulPlayerImplementation *)player {
     %orig;
-    [self.center sendMessageName:@"updatePlaybackState" userInfo:@{@"argument": @(!player.isPaused)}];
+    [self.source sendPlaybackState:!player.isPaused];
 }
 - (id)initWithPlayer:(id)arg0 collectionPlatform:(id)arg1 playlistDataLoader:(id)arg2 radioPlaybackService:(id)arg3 adsManager:(id)arg4 productState:(id)arg5 testManager:(id)arg6 collectionTestManager:(id)arg7 statefulPlayer:(id)arg8 yourEpisodesSaveManager:(id)arg9 educationEligibility:(id)arg10 reinventFreeConfiguration:(id)arg11 curationPlatform:(id)arg12 smartShuffleHandler:(id)arg13 {
-    self.center = [%c(CPDistributedMessagingCenter) centerNamed:@"CanvasBackground.CanvasServer"];
-    rocketbootstrap_distributedmessagingcenter_apply(self.center);
+    self.source = [%c(CBInfoSource) sourceWithBundleID:@"com.spotify.client"];
     self.imageLoader = [[GLUEService provideImageLoaderFactory] createImageLoaderForSourceIdentifier:@"com.popsicletreehouse.CanvasBackground"];
     return %orig;
 }

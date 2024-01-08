@@ -1,16 +1,25 @@
 #import "SpringBoard.h"
 
 %hook SBMediaController
+%property (nonatomic, readonly) NSString *nowPlayingBundleID;
+%new
+- (NSString *)nowPlayingBundleID {
+    return [self.nowPlayingApplication bundleIdentifier];
+}
 - (void)_setNowPlayingApplication:(SBApplication *)application {
 	%orig;
-	if (application && ![application.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[%c(CBInfoTunnel) sharedTunnel] invalidate];
+	if (application && ![self.nowPlayingBundleID isEqualToString:@"com.spotify.client"]) {
+        [[%c(CBInfoForwarder) sharedForwarder] invalidate];
+    }
 }
 %end
 
 %hook FBProcessManager
 - (void)noteProcessDidExit:(FBProcess *)process {
     %orig;
-    if ([process.bundleIdentifier isEqualToString:@"com.spotify.client"]) [[%c(CBInfoTunnel) sharedTunnel] invalidate];
+    if ([process.bundleIdentifier isEqualToString:@"com.spotify.client"]) {
+        [[%c(CBInfoForwarder) sharedForwarder] invalidate];
+    }
 }
 %end
 
@@ -18,7 +27,7 @@
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
 	%orig;
-	self.canvasController = [[%c(CBViewController) alloc] initWithInfoTunnel:[%c(CBInfoTunnel) sharedTunnel]];
+	self.canvasController = [[%c(CBViewController) alloc] initWithInfoForwarder:[%c(CBInfoForwarder) sharedForwarder]];
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
     self.canvasController.view.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view insertSubview:self.canvasController.view atIndex:0];
@@ -42,7 +51,7 @@
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
 	%orig;
-	self.canvasController = [[%c(CBViewController) alloc] initWithInfoTunnel:[%c(CBInfoTunnel) sharedTunnel]];
+	self.canvasController = [[%c(CBViewController) alloc] initWithInfoForwarder:[%c(CBInfoForwarder) sharedForwarder]];
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
     self.canvasController.view.translatesAutoresizingMaskIntoConstraints = NO;
     [self.panelBackgroundContainerView addSubview:self.canvasController.view];
@@ -79,7 +88,7 @@
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
 	%orig;
-	self.canvasController = [[%c(CBViewController) alloc] initWithInfoTunnel:[%c(CBInfoTunnel) sharedTunnel]];
+	self.canvasController = [[%c(CBViewController) alloc] initWithInfoForwarder:[%c(CBInfoForwarder) sharedForwarder]];
     self.canvasController.view.contentMode = UIViewContentModeScaleAspectFill;
     self.canvasController.view.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view.slideableContentView addSubview:self.canvasController.view];
@@ -98,6 +107,6 @@
 - (void)setBacklightFactorPending:(float)backlightFactor  {
     %orig;
     BOOL screenOff = backlightFactor == 0.0f;
-    [[CBInfoTunnel sharedTunnel] setSuspended:screenOff];
+    [[CBInfoForwarder sharedForwarder] setSuspended:screenOff];
 }
 %end

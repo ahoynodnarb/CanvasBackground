@@ -4,7 +4,7 @@ INSTALL_TARGET_PROCESSES = Spotify
 
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = CanvasBackgroundSpotify
+TWEAK_NAME = CBSpotify
 
 $(TWEAK_NAME)_FILES = Spotify.x
 $(TWEAK_NAME)_CFLAGS = -fobjc-arc

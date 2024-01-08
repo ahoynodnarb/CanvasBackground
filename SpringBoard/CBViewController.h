@@ -1,11 +1,12 @@
 #import <UIKit/UIKit.h>
-#import "CBInfoTunnel.h"
-#import "CBCanvasObserver.h"
+#import <AVKit/AVKit.h>
+#import "CBInfoForwarder.h"
+#import "CBObserver.h"
 
-@interface CBViewController : UIViewController <CBCanvasObserver>
-@property (nonatomic, weak) CBInfoTunnel *infoTunnel;
+@interface CBViewController : UIViewController <CBObserver>
+@property (nonatomic, weak) CBInfoForwarder *infoForwarder;
 @property (nonatomic, assign) BOOL shouldSuspend;
-- (instancetype)initWithInfoTunnel:(CBInfoTunnel *)infoTunnel;
+- (instancetype)initWithInfoForwarder:(CBInfoForwarder *)infoForwarder;
 - (void)setPlaying:(BOOL)playing;
 - (void)updateWithImage:(UIImage *)image;
 - (void)invalidate;
