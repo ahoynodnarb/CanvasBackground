@@ -26,24 +26,24 @@
 }
 
 - (void)sendVideoPath:(NSString *)path {
-    NSDictionary *userInfo = @{
-        @"path": path,
+    NSMutableDictionary *userInfo = [@{
         @"bundleID": self.bundleID
-    };
+    } mutableCopy];
+    if (path) [userInfo setObject:path forKey:@"path"];
     [self.center sendMessageName:@"updateVideoWithPath" userInfo:userInfo];
 }
 - (void)sendVideoURL:(NSString *)URL {
-    NSDictionary *userInfo = @{
-        @"URL": URL,
+    NSMutableDictionary *userInfo = [@{
         @"bundleID": self.bundleID
-    };
+    } mutableCopy];
+    if (URL) [userInfo setObject:URL forKey:@"URL"];
     [self.center sendMessageName:@"updateVideoWithURL" userInfo:userInfo];
 }
 - (void)sendImageData:(NSData *)data {
-    NSDictionary *userInfo = @{
-        @"data": data,
+    NSMutableDictionary *userInfo = [@{
         @"bundleID": self.bundleID
-    };
+    } mutableCopy];
+    if (data) [userInfo setObject:data forKey:@"data"];
     [self.center sendMessageName:@"updateImageWithData" userInfo:userInfo];
 }
 

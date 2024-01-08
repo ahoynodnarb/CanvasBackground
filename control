@@ -6,4 +6,4 @@ Description: Bring Spotify's canvas to your lock and homescreen
 Maintainer: PopsicleTreehouse
 Author: PopsicleTreehouse
 Section: Tweaks
-Depends: mobilesubstrate (>= 0.9.5000), com.muirey03.libmryipc
+Depends: mobilesubstrate (>= 0.9.5000), com.rpetrich.rocketbootstrap

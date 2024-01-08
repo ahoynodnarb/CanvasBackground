@@ -8,8 +8,6 @@ TWEAK_NAME = CBSpotify
 
 $(TWEAK_NAME)_FILES = Spotify.x
 $(TWEAK_NAME)_CFLAGS = -fobjc-arc
-$(TWEAK_NAME)_LIBRARIES = rocketbootstrap
-$(TWEAK_NAME)_PRIVATE_FRAMEWORKS = AppSupport
 
 
 include $(THEOS_MAKE_PATH)/tweak.mk
