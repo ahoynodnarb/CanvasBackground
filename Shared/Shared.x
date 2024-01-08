@@ -17,6 +17,7 @@
         self.center = [%c(CPDistributedMessagingCenter) centerNamed:@"CanvasBackground.CanvasServer"];
         rocketbootstrap_distributedmessagingcenter_apply(self.center);
         self.bundleID = bundleID;
+        [self.center callExternalVoidMethod:@selector(registerBundle:) withArguments:self.bundleID];
     }
     return self;
 }

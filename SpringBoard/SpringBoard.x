@@ -8,18 +8,8 @@
 }
 - (void)_setNowPlayingApplication:(SBApplication *)application {
 	%orig;
-	if (application && ![self.nowPlayingBundleID isEqualToString:@"com.spotify.client"]) {
-        [[%c(CBInfoForwarder) sharedForwarder] invalidate];
-    }
-}
-%end
-
-%hook FBProcessManager
-- (void)noteProcessDidExit:(FBProcess *)process {
-    %orig;
-    if ([process.bundleIdentifier isEqualToString:@"com.spotify.client"]) {
-        [[%c(CBInfoForwarder) sharedForwarder] invalidate];
-    }
+    CBInfoForwarder *forwarder = [%c(CBInfoForwarder) sharedForwarder];
+    if (![forwarder bundleRegistered:self.nowPlayingBundleID] && !application) [forwarder invalidate];
 }
 %end
 

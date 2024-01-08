@@ -9,8 +9,17 @@
 @interface CBInfoForwarder () {
     AVPlayerLooper *playerLooper;
     CPDistributedMessagingCenter *center;
+    NSMutableSet *registeredBundles;
 }
 @property (nonatomic, readonly) NSString *bundleID;
+- (void)registerBundle:(NSString *)bundle;
+- (void)updateVideo:(NSURL *)URL;
+- (void)updateVideoWithURL:(NSDictionary *)userInfo;
+- (void)updateVideoWithPath:(NSDictionary *)userInfo;
+- (void)updateImageWithData:(NSDictionary *)userInfo;
+- (void)updatePlaybackState:(NSDictionary *)userInfo;
+- (BOOL)bundleValid:(NSString *)bundleID;
+- (void)executeObserverBlock:(void (^)(NSObject<CBObserver> *))block completion:(void (^)(void))completion;
 @end
 
 @implementation CBInfoForwarder
@@ -30,13 +39,14 @@
         _player.muted = YES;
         _player.preventsDisplaySleepDuringVideoPlayback = NO;
         self.observers = [NSMutableSet set];
-        center = [NSClassFromString(@"CPDistributedMessagingCenter") centerNamed:@"CanvasBackground.CanvasServer"];
         rocketbootstrap_distributedmessagingcenter_apply(center);
 		[center runServerOnCurrentThread];
+		[center registerForMessageName:@"registerBundle" target:self selector:@selector(handleMessage:userInfo:)];
 		[center registerForMessageName:@"updateVideoWithPath" target:self selector:@selector(handleMessage:userInfo:)];
 		[center registerForMessageName:@"updateVideoWithURL" target:self selector:@selector(handleMessage:userInfo:)];
 		[center registerForMessageName:@"updateImageWithData" target:self selector:@selector(handleMessage:userInfo:)];
 		[center registerForMessageName:@"updatePlaybackState" target:self selector:@selector(handleMessage:userInfo:)];
+        registeredBundles = [NSMutableSet set];
     }
     return self;
 }
@@ -87,6 +97,10 @@
 }
 
 - (void)handleMessage:(NSString *)messageName userInfo:(NSDictionary *)userInfo {
+    if ([messageName isEqualToString:@"registerBundle"]) {
+        [self registerBundle:[userInfo objectForKey:@"bundleID"]];
+        return;
+    }
     if ([messageName isEqualToString:@"updateVideoWithPath"]) {
         [self updateVideoWithPath:userInfo];
         return;
@@ -103,6 +117,10 @@
         [self updatePlaybackState:userInfo];
         return;
     }
+}
+
+- (BOOL)bundleValid:(NSString *)bundleID {
+    return !bundleID || [bundleID isEqualToString:self.bundleID];
 }
 
 - (void)updateVideo:(NSURL *)URL {
@@ -122,7 +140,7 @@
 
 - (void)updateVideoWithURL:(NSDictionary *)userInfo {
     NSString *bundleID = [userInfo objectForKey:@"bundleID"];
-    if (![bundleID isEqualToString:self.bundleID]) return;
+    if (![self bundleValid:bundleID]) return;
     NSString *videoURL = [userInfo objectForKey:@"URL"];
     NSURL *URL = [NSURL URLWithString:videoURL];
     [self updateVideo:URL];
@@ -130,7 +148,7 @@
 
 - (void)updateVideoWithPath:(NSDictionary *)userInfo {
     NSString *bundleID = [userInfo objectForKey:@"bundleID"];
-    if (![bundleID isEqualToString:self.bundleID]) return;
+    if (![self bundleValid:bundleID]) return;
     NSString *videoPath = [userInfo objectForKey:@"path"];
     NSURL *URL = [NSURL fileURLWithPath:videoPath];
     [self updateVideo:URL];
@@ -139,7 +157,7 @@
 
 - (void)updateImageWithData:(NSDictionary *)userInfo {
     NSString *bundleID = [userInfo objectForKey:@"bundleID"];
-    if (![bundleID isEqualToString:self.bundleID]) return;
+    if (![self bundleValid:bundleID]) return;
     NSData *data = [userInfo objectForKey:@"data"];
     [_player removeAllItems];
     UIImage *image = [UIImage imageWithData:data];
@@ -150,11 +168,19 @@
 
 - (void)updatePlaybackState:(NSDictionary *)userInfo {
     NSString *bundleID = [userInfo objectForKey:@"bundleID"];
-    if (![bundleID isEqualToString:self.bundleID]) return;
+    if (![self bundleValid:bundleID]) return;
     NSNumber *state = [userInfo objectForKey:@"state"];
     BOOL playing = [state boolValue];
     if (playing == self.playing) return;
     self.playing = playing;
+}
+
+- (BOOL)bundleRegistered:(NSString *)bundle {
+    return [registeredBundles containsObject:bundle];
+}
+
+- (void)registerBundle:(NSString *)bundle {
+    [registeredBundles addObject:bundle];
 }
 
 - (void)setSuspended:(BOOL)suspended {
