@@ -22,25 +22,25 @@
 }
 
 - (void)sendVideoPath:(NSString *)path {
-    NSDictionary *userInfo = @{
-        @"path": path,
+    NSMutableDictionary *userInfo = [@{
         @"bundleID": self.bundleID
-    };
-    [self.center callExternalVoidMethod:@selector(updateVideoWithPath:) withArguments:userInfo];
+    } mutableCopy];
+    if (path) [userInfo setObject:path forKey:@"path"];
+    [self.center sendMessageName:@"updateVideoWithPath" userInfo:userInfo];
 }
 - (void)sendVideoURL:(NSString *)URL {
-    NSDictionary *userInfo = @{
-        @"URL": URL,
+    NSMutableDictionary *userInfo = [@{
         @"bundleID": self.bundleID
-    };
-    [self.center callExternalVoidMethod:@selector(updateVideoWithURL:) withArguments:userInfo];
+    } mutableCopy];
+    if (URL) [userInfo setObject:URL forKey:@"URL"];
+    [self.center sendMessageName:@"updateVideoWithURL" userInfo:userInfo];
 }
 - (void)sendImageData:(NSData *)data {
-    NSDictionary *userInfo = @{
-        @"data": data,
+    NSMutableDictionary *userInfo = [@{
         @"bundleID": self.bundleID
-    };
-    [self.center callExternalVoidMethod:@selector(updateImageWithData:) withArguments:userInfo];
+    } mutableCopy];
+    if (data) [userInfo setObject:data forKey:@"data"];
+    [self.center sendMessageName:@"updateImageWithData" userInfo:userInfo];
 }
 
 - (void)sendPlaybackState:(BOOL)playing {
@@ -48,6 +48,6 @@
         @"state": @(playing),
         @"bundleID": self.bundleID
     };
-    [self.center callExternalVoidMethod:@selector(updatePlaybackState:) withArguments:userInfo];
+    [self.center sendMessageName:@"updatePlaybackState" userInfo:userInfo];
 }
 @end
