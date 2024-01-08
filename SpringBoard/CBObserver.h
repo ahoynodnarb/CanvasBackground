@@ -1,7 +1,7 @@
 #import <UIKit/UIKit.h>
 #import <AVKit/AVKit.h>
 
-@protocol CBCanvasObserver
+@protocol CBObserver
 @required
 @property (nonatomic, assign) BOOL shouldSuspend;
 - (void)updateWithImage:(UIImage *)image;

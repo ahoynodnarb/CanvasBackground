@@ -1,21 +1,27 @@
-#import "CBInfoTunnel.h"
+#import "CBInfoForwarder.h"
 #import <MRYIPCCenter.h>
 
-@interface CBInfoTunnel () {
+@interface SBMediaController
+@property (nonatomic, readonly) NSString *nowPlayingBundleID;
++ (instancetype)sharedInstance;
+@end
+
+@interface CBInfoForwarder () {
     AVPlayerLooper *playerLooper;
     MRYIPCCenter *center;
 }
+@property (nonatomic, readonly) NSString *bundleID;
 @end
 
-@implementation CBInfoTunnel
+@implementation CBInfoForwarder
 
-+ (instancetype)sharedTunnel {
-    static CBInfoTunnel *sharedTunnel;
++ (instancetype)sharedForwarder {
+    static CBInfoForwarder *sharedForwarder;
     static dispatch_once_t t;
     dispatch_once(&t, ^{
-        sharedTunnel = [[self alloc] init];
+        sharedForwarder = [[self alloc] init];
     });
-    return sharedTunnel;
+    return sharedForwarder;
 }
 
 - (instancetype)init {
@@ -27,7 +33,7 @@
         center = [NSClassFromString(@"MRYIPCCenter") centerNamed:@"CanvasBackground.CanvasServer"];
         [center addTarget:self action:@selector(updateVideoWithURL:)];
         [center addTarget:self action:@selector(updateVideoWithPath:)];
-        [center addTarget:self action:@selector(updateWithImageData:)];
+        [center addTarget:self action:@selector(updateImageWithData:)];
         [center addTarget:self action:@selector(updatePlaybackState:)];
     }
     return self;
@@ -35,7 +41,7 @@
 
 - (void)setPlaying:(BOOL)playing {
     _playing = playing;
-    [self executeObserverBlock:^(NSObject<CBCanvasObserver> *observer) {
+    [self executeObserverBlock:^(NSObject<CBObserver> *observer) {
         [observer setPlaying:playing];
     } completion:^{
         if (_playing) [_player play];
@@ -43,20 +49,24 @@
     }];
 }
 
-- (void)addObserver:(id<CBCanvasObserver>)observer {
+- (NSString *)bundleID {
+    SBMediaController *sharedController = [NSClassFromString(@"SBMediaController") sharedInstance];
+    return [sharedController nowPlayingBundleID];
+}
+
+- (void)addObserver:(id<CBObserver>)observer {
     [self.observers addObject:observer];
 }
 
-- (void)removeObserver:(id<CBCanvasObserver>)observer {
+- (void)removeObserver:(id<CBObserver>)observer {
     [self.observers removeObject:observer];
 }
 
-- (void)executeObserverBlock:(void (^)(NSObject<CBCanvasObserver> *))block completion:(void (^)(void))completion {
+- (void)executeObserverBlock:(void (^)(NSObject<CBObserver> *))block completion:(void (^)(void))completion {
     // ensure that all finish at the same time
     dispatch_group_t group = dispatch_group_create();
-    for (NSObject<CBCanvasObserver> *observer in self.observers) {
+    for (NSObject<CBObserver> *observer in self.observers) {
         dispatch_group_enter(group);
-        // dispatch_async(dispatch_get_main_queue(), ^{
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             block(observer);
             dispatch_group_leave(group);
@@ -68,20 +78,10 @@
 }
 
 - (void)invalidate {
-    [self executeObserverBlock:^(NSObject<CBCanvasObserver> *observer) {
+    [self executeObserverBlock:^(NSObject<CBObserver> *observer) {
         [observer invalidate];
     } completion:nil];
     [_player removeAllItems];
-}
-
-- (void)updateVideoWithURL:(NSString *)videoURL {
-    NSURL *URL = [NSURL URLWithString:videoURL];
-    [self updateVideo:URL];
-}
-
-- (void)updateVideoWithPath:(NSString *)videoPath {
-    NSURL *URL = [NSURL fileURLWithPath:videoPath];
-    [self updateVideo:URL];
 }
 
 - (void)updateVideo:(NSURL *)URL {
@@ -91,7 +91,7 @@
     AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
     [imageGenerator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:CMTimeMakeWithSeconds(0, 1)]] completionHandler:^(CMTime requestedTime, CGImageRef im, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
         UIImage *image = [UIImage imageWithCGImage:im];
-        [self executeObserverBlock:^(NSObject<CBCanvasObserver> *observer) {
+        [self executeObserverBlock:^(NSObject<CBObserver> *observer) {
             [observer updateWithImage:image];
         } completion:nil];
     }];
@@ -99,16 +99,39 @@
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 }
 
-- (void)updateWithImageData:(NSData *)data {
+- (void)updateVideoWithURL:(NSDictionary *)userInfo {
+    NSString *bundleID = [userInfo objectForKey:@"bundleID"];
+    if (![bundleID isEqualToString:self.bundleID]) return;
+    NSString *videoURL = [userInfo objectForKey:@"URL"];
+    NSURL *URL = [NSURL URLWithString:videoURL];
+    [self updateVideo:URL];
+}
+
+- (void)updateVideoWithPath:(NSDictionary *)userInfo {
+    NSString *bundleID = [userInfo objectForKey:@"bundleID"];
+    if (![bundleID isEqualToString:self.bundleID]) return;
+    NSString *videoPath = [userInfo objectForKey:@"path"];
+    NSURL *URL = [NSURL fileURLWithPath:videoPath];
+    [self updateVideo:URL];
+}
+
+
+- (void)updateImageWithData:(NSDictionary *)userInfo {
+    NSString *bundleID = [userInfo objectForKey:@"bundleID"];
+    if (![bundleID isEqualToString:self.bundleID]) return;
+    NSData *data = [userInfo objectForKey:@"data"];
     [_player removeAllItems];
     UIImage *image = [UIImage imageWithData:data];
-    [self executeObserverBlock:^(NSObject<CBCanvasObserver> *observer) {
+    [self executeObserverBlock:^(NSObject<CBObserver> *observer) {
         [observer updateWithImage:image];
     } completion:nil];
 }
 
-- (void)updatePlaybackState:(NSNumber *)number {
-    BOOL playing = [number boolValue];
+- (void)updatePlaybackState:(NSDictionary *)userInfo {
+    NSString *bundleID = [userInfo objectForKey:@"bundleID"];
+    if (![bundleID isEqualToString:self.bundleID]) return;
+    NSNumber *state = [userInfo objectForKey:@"state"];
+    BOOL playing = [state boolValue];
     if (playing == self.playing) return;
     self.playing = playing;
 }
@@ -118,8 +141,8 @@
     else if (self.playing) [_player play];
 }
 
-- (void)observerChangedSuspension:(NSObject<CBCanvasObserver> *)observer {
-    for (NSObject<CBCanvasObserver> *observer in self.observers) {
+- (void)observerChangedSuspension:(NSObject<CBObserver> *)observer {
+    for (NSObject<CBObserver> *observer in self.observers) {
         if (!observer.shouldSuspend) {
             [self setSuspended:NO];
             return;

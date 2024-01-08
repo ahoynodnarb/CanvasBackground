@@ -9,6 +9,12 @@
 @property (nonatomic, strong) NSString *bundleIdentifier;
 @end
 
+@interface SBMediaController
+@property (nonatomic, readonly) NSString *nowPlayingBundleID;
+@property (nonatomic, strong) SBApplication *nowPlayingApplication;
++ (instancetype)sharedInstance;
+@end
+
 @interface SBHomeScreenViewController : UIViewController
 @property (nonatomic, strong) CBViewController *canvasController;
 @end

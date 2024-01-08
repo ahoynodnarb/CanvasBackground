@@ -1,7 +1,7 @@
 #import "Spotify.h"
 
 %hook SPTNowPlayingModel
-%property (nonatomic, strong) MRYIPCCenter *center;
+%property (nonatomic, strong) CBInfoSource *source;
 %property (nonatomic, strong) SPTGLUEImageLoader *imageLoader;
 %new
 + (NSString *)localPathForCanvas:(NSString *)canvasURL {
@@ -19,15 +19,18 @@
 - (void)sendTrackImage:(NSURL *)imageURL {
     [self.imageLoader loadImageForURL:imageURL imageSize:CGSizeMake(640, 640) completion:^(UIImage *image, NSError *error) {
         NSData *imageData = UIImagePNGRepresentation(image);
-        [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
+        [self.source sendImageData:imageData];
     }];
 }
 
 %new
 - (void)sendStaticCanvas:(NSURL *)imageURL {
     NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
-    if (imageData) [self.center callExternalVoidMethod:@selector(updateWithImageData:) withArguments:imageData];
-    else [self sendTrackImage:imageURL];
+    if (!imageData) {
+        [self sendTrackImage:imageURL];
+        return;
+    }
+    [self.source sendImageData:imageData];
 }
 
 %new
@@ -51,11 +54,12 @@
     }
     NSString *filePath = [%c(SPTNowPlayingModel) localPathForCanvas:originalURL];
     BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:filePath];
-    if (fileExists) [self.center callExternalVoidMethod:@selector(updateVideoWithPath:) withArguments:filePath];
-    else {
-        [self.center callExternalVoidMethod:@selector(updateVideoWithURL:) withArguments:originalURL];
+    if (!fileExists) {
+        [self.source sendVideoURL:originalURL];
         [self writeCanvasToFile:[NSURL URLWithString:originalURL] filePath:[NSURL fileURLWithPath:filePath]];
+        return;
     }
+    [self.source sendVideoPath:filePath];
 }
 
 - (void)player:(id)player didMoveToRelativeTrack:(id)track {
@@ -65,10 +69,10 @@
 
 - (void)playerDidUpdatePlaybackControls:(SPTStatefulPlayerImplementation *)player {
     %orig;
-    [self.center callExternalVoidMethod:@selector(updatePlaybackState:) withArguments:@(!player.isPaused)];
+    [self.source sendPlaybackState:!player.isPaused];
 }
 - (id)initWithPlayer:(id)arg0 collectionPlatform:(id)arg1 playlistDataLoader:(id)arg2 radioPlaybackService:(id)arg3 adsManager:(id)arg4 productState:(id)arg5 testManager:(id)arg6 collectionTestManager:(id)arg7 statefulPlayer:(id)arg8 yourEpisodesSaveManager:(id)arg9 educationEligibility:(id)arg10 reinventFreeConfiguration:(id)arg11 curationPlatform:(id)arg12 smartShuffleHandler:(id)arg13 {
-    self.center = [%c(MRYIPCCenter) centerNamed:@"CanvasBackground.CanvasServer"];
+    self.source = [%c(CBInfoSource) sourceWithBundleID:@"com.spotify.client"];
     self.imageLoader = [[GLUEService provideImageLoaderFactory] createImageLoaderForSourceIdentifier:@"com.popsicletreehouse.CanvasBackground"];
     return %orig;
 }

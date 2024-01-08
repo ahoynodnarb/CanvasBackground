@@ -8,18 +8,18 @@
 @end
 
 @implementation CBViewController
-- (instancetype)initWithInfoTunnel:(CBInfoTunnel *)infoTunnel {
+- (instancetype)initWithInfoForwarder:(CBInfoForwarder *)infoForwarder {
     if (self = [super init]) {
-        self.infoTunnel = infoTunnel;
-        canvasPlayer = [self.infoTunnel player];
-        [infoTunnel addObserver:self];
+        self.infoForwarder = infoForwarder;
+        canvasPlayer = [self.infoForwarder player];
+        [infoForwarder addObserver:self];
     }
     return self;
 }
 
 - (void)setShouldSuspend:(BOOL)shouldSuspend {
     _shouldSuspend = shouldSuspend;
-    [self.infoTunnel observerChangedSuspension:self];
+    [self.infoForwarder observerChangedSuspension:self];
 }
 
 - (void)invalidate {
@@ -31,9 +31,13 @@
 - (void)animateFade:(BOOL)fadeIn completion:(void (^)(void))completion {
     CGFloat currentOpacity = self.view.layer.opacity;
     CGFloat targetOpacity = fadeIn ? 1.0f : 0.0f;
-    if (currentOpacity == targetOpacity) return;
+    if (currentOpacity == targetOpacity) {
+        return;
+    }
     [CATransaction begin];
-    if (completion) [CATransaction setCompletionBlock:completion];
+    if (completion) {
+        [CATransaction setCompletionBlock:completion];
+    }
     CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
     animation.duration = 0.25f;
     animation.fromValue = @(currentOpacity);
@@ -52,7 +56,6 @@
 - (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if ([path isEqualToString:@"readyForDisplay"]) {
         self.canvasImageView.hidden = canvasPlayerLayer.readyForDisplay;
-        return;
     }
 }
 
