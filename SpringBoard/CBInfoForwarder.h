@@ -11,13 +11,8 @@
 + (instancetype)sharedForwarder;
 - (void)addObserver:(NSObject<CBObserver> *)observer;
 - (void)removeObserver:(NSObject<CBObserver> *)observer;
-- (void)executeObserverBlock:(void (^)(NSObject<CBObserver> *))block completion:(void (^)(void))completion;
 - (void)invalidate;
-- (void)updateVideo:(NSURL *)URL;
-- (void)updateVideoWithURL:(NSDictionary *)userInfo;
-- (void)updateVideoWithPath:(NSDictionary *)userInfo;
-- (void)updateImageWithData:(NSDictionary *)userInfo;
-- (void)updatePlaybackState:(NSDictionary *)userInfo;
+- (BOOL)bundleRegistered:(NSString *)bundle;
 - (void)setSuspended:(BOOL)suspended;
 - (void)observerChangedSuspension:(NSObject<CBObserver> *)observer;
 @end

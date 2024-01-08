@@ -17,6 +17,10 @@
         self.center = [%c(CPDistributedMessagingCenter) centerNamed:@"CanvasBackground.CanvasServer"];
         rocketbootstrap_distributedmessagingcenter_apply(self.center);
         self.bundleID = bundleID;
+        NSDictionary *userInfo = @{
+            @"bundleID": self.bundleID
+        };
+        [self.center sendMessageName:@"updateVideoWithPath" userInfo:userInfo];
     }
     return self;
 }
