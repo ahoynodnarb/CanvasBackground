@@ -20,7 +20,7 @@
         NSDictionary *userInfo = @{
             @"bundleID": self.bundleID
         };
-        [self.center sendMessageName:@"updateVideoWithPath" userInfo:userInfo];
+        [self.center sendMessageName:@"registerBundle" userInfo:userInfo];
     }
     return self;
 }

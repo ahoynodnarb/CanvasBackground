@@ -39,6 +39,7 @@
         _player.muted = YES;
         _player.preventsDisplaySleepDuringVideoPlayback = NO;
         self.observers = [NSMutableSet set];
+        center = [NSClassFromString(@"CPDistributedMessagingCenter") centerNamed:@"CanvasBackground.CanvasServer"];
         rocketbootstrap_distributedmessagingcenter_apply(center);
 		[center runServerOnCurrentThread];
 		[center registerForMessageName:@"registerBundle" target:self selector:@selector(handleMessage:userInfo:)];
