@@ -13,6 +13,7 @@
 }
 %end
 
+%group Home
 %hook SBHomeScreenViewController
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
@@ -35,8 +36,9 @@
     self.canvasController.shouldSuspend = hidden;
 }
 %end
+%end
 
-
+%group Lock
 %hook SBCoverSheetPrimarySlidingViewController
 %property (nonatomic, strong) CBViewController *canvasController;
 - (void)viewDidLoad {
@@ -90,7 +92,7 @@
         [self.canvasController.view.rightAnchor constraintEqualToAnchor:self.view.slideableContentView.rightAnchor],
     ]];
 }
-
+%end
 %end
 
 %hook SBBacklightController
@@ -100,3 +102,12 @@
     [[CBInfoForwarder sharedForwarder] setSuspended:screenOff];
 }
 %end
+
+%ctor {
+    NSDictionary *bundleDefaults = [[NSUserDefaults standardUserDefaults]persistentDomainForName:@"com.popsicletreehouse.canvasbackgroundprefs"];
+    BOOL lockEnabled = [bundleDefaults objectForKey:@"lockEnabled"] ? [[bundleDefaults objectForKey:@"lockEnabled"] boolValue] : YES;
+    BOOL homeEnabled = [bundleDefaults objectForKey:@"homeEnabled"] ? [[bundleDefaults objectForKey:@"homeEnabled"] boolValue] : YES;
+    if (lockEnabled) %init(Lock);
+    if (homeEnabled) %init(Home);
+    %init(_ungrouped);
+}

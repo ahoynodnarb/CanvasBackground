@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.popsicletreehouse.canvasbackgroundprefs</string>
+			<key>key</key>
+			<string>lockEnabled</string>
+			<key>label</key>
+			<string>Enable on Lockscreen</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.popsicletreehouse.canvasbackgroundprefs</string>
+			<key>key</key>
+			<string>homeEnabled</string>
+			<key>label</key>
+			<string>Enable on Homescreen</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>CanvasBackground</string>
+</dict>
+</plist>
