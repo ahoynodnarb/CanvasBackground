@@ -16,6 +16,7 @@
     if (self = [super init]) {
         self.center = [%c(MRYIPCCenter) centerNamed:@"CanvasBackground.CanvasServer"];
         self.bundleID = bundleID;
+        [self.center callExternalVoidMethod:@selector(registerBundle:) withArguments:self.bundleID];
     }
     return self;
 }

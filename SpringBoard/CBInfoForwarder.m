@@ -9,8 +9,17 @@
 @interface CBInfoForwarder () {
     AVPlayerLooper *playerLooper;
     MRYIPCCenter *center;
+    NSMutableSet *registeredBundles;
 }
 @property (nonatomic, readonly) NSString *bundleID;
+- (void)registerBundle:(NSString *)bundle;
+- (void)updateVideo:(NSURL *)URL;
+- (void)updateVideoWithURL:(NSDictionary *)userInfo;
+- (void)updateVideoWithPath:(NSDictionary *)userInfo;
+- (void)updateImageWithData:(NSDictionary *)userInfo;
+- (void)updatePlaybackState:(NSDictionary *)userInfo;
+- (BOOL)bundleValid:(NSString *)bundleID;
+- (void)executeObserverBlock:(void (^)(NSObject<CBObserver> *))block completion:(void (^)(void))completion;
 @end
 
 @implementation CBInfoForwarder
@@ -31,10 +40,12 @@
         _player.preventsDisplaySleepDuringVideoPlayback = NO;
         self.observers = [NSMutableSet set];
         center = [NSClassFromString(@"MRYIPCCenter") centerNamed:@"CanvasBackground.CanvasServer"];
+        [center addTarget:self action:@selector(registerBundle:)];
         [center addTarget:self action:@selector(updateVideoWithURL:)];
         [center addTarget:self action:@selector(updateVideoWithPath:)];
         [center addTarget:self action:@selector(updateImageWithData:)];
         [center addTarget:self action:@selector(updatePlaybackState:)];
+        registeredBundles = [NSMutableSet set];
     }
     return self;
 }
@@ -84,6 +95,10 @@
     [_player removeAllItems];
 }
 
+- (BOOL)bundleValid:(NSString *)bundleID {
+    return !bundleID || [bundleID isEqualToString:self.bundleID];
+}
+
 - (void)updateVideo:(NSURL *)URL {
     AVAsset *asset = [AVAsset assetWithURL:URL];
     AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
@@ -101,7 +116,7 @@
 
 - (void)updateVideoWithURL:(NSDictionary *)userInfo {
     NSString *bundleID = [userInfo objectForKey:@"bundleID"];
-    if (![bundleID isEqualToString:self.bundleID]) return;
+    if (![self bundleValid:bundleID]) return;
     NSString *videoURL = [userInfo objectForKey:@"URL"];
     NSURL *URL = [NSURL URLWithString:videoURL];
     [self updateVideo:URL];
@@ -109,7 +124,7 @@
 
 - (void)updateVideoWithPath:(NSDictionary *)userInfo {
     NSString *bundleID = [userInfo objectForKey:@"bundleID"];
-    if (![bundleID isEqualToString:self.bundleID]) return;
+    if (![self bundleValid:bundleID]) return;
     NSString *videoPath = [userInfo objectForKey:@"path"];
     NSURL *URL = [NSURL fileURLWithPath:videoPath];
     [self updateVideo:URL];
@@ -118,7 +133,7 @@
 
 - (void)updateImageWithData:(NSDictionary *)userInfo {
     NSString *bundleID = [userInfo objectForKey:@"bundleID"];
-    if (![bundleID isEqualToString:self.bundleID]) return;
+    if (![self bundleValid:bundleID]) return;
     NSData *data = [userInfo objectForKey:@"data"];
     [_player removeAllItems];
     UIImage *image = [UIImage imageWithData:data];
@@ -129,11 +144,19 @@
 
 - (void)updatePlaybackState:(NSDictionary *)userInfo {
     NSString *bundleID = [userInfo objectForKey:@"bundleID"];
-    if (![bundleID isEqualToString:self.bundleID]) return;
+    if (![self bundleValid:bundleID]) return;
     NSNumber *state = [userInfo objectForKey:@"state"];
     BOOL playing = [state boolValue];
     if (playing == self.playing) return;
     self.playing = playing;
+}
+
+- (BOOL)bundleRegistered:(NSString *)bundle {
+    return [registeredBundles containsObject:bundle];
+}
+
+- (void)registerBundle:(NSString *)bundle {
+    [registeredBundles addObject:bundle];
 }
 
 - (void)setSuspended:(BOOL)suspended {
